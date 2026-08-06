@@ -5,6 +5,11 @@ import Wheel from './components/Wheel.jsx';
 import { loadDictionary } from './game/dictionary.js';
 import { MODES, MODE_KEYS } from './game/generate.js';
 import { loadProgress, saveProgress, resetProgress } from './game/storage.js';
+import { SettingsIcon } from './assets/icons/index.js';
+import coinImg from './assets/images/coin.png';
+import hintBadgeImg from './assets/images/hint-badge.png';
+import bonusBadgeImg from './assets/images/bonus-badge.png';
+import beeCornerImg from './assets/images/bee-corner.png';
 
 const BOARDS = [
   {
@@ -272,29 +277,30 @@ export default function App() {
         </div>
         <div className="hud-section hud-right">
           <div className="coins" aria-label={`${progress.coins} coins`}>
-            <span className="coin-dot" aria-hidden="true">✦</span>
+            <img className="coin-dot" src={coinImg} alt="" aria-hidden="true" />
             {progress.coins}
           </div>
           <button className="gear" onClick={() => setShowSettings(true)} aria-label="Settings">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" />
-            </svg>
+            <SettingsIcon />
           </button>
         </div>
       </header>
 
       <main className="play-area">
-      {progress.board === 'rows' ? (
-        <WordRows
-          level={level}
-          solved={progress.solved}
-          revealed={revealed}
-          justSolved={justSolved}
-        />
-      ) : (
-        <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
-      )}
+      <div className="board-wrap">
+        <img className="board-corner-tl" src={beeCornerImg} alt="" aria-hidden="true" />
+        {progress.board === 'rows' ? (
+          <WordRows
+            level={level}
+            solved={progress.solved}
+            revealed={revealed}
+            justSolved={justSolved}
+          />
+        ) : (
+          <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
+        )}
+        <img className="board-corner-br" src={beeCornerImg} alt="" aria-hidden="true" />
+      </div>
 
       <div className={previewClass} aria-live="polite">
         {note ? (
@@ -322,12 +328,12 @@ export default function App() {
 
       <footer className="actions">
         <button className="btn" onClick={takeHint} disabled={progress.coins < HINT_COST}>
-          <span className="action-icon" aria-hidden="true">✦</span>
+          <img className="action-icon" src={hintBadgeImg} alt="" aria-hidden="true" />
           <span>Hint</span>
           <span className="cost">{HINT_COST}</span>
         </button>
         <button className="btn" onClick={() => setShowBonus(true)}>
-          <span className="action-icon" aria-hidden="true">★</span>
+          <img className="action-icon" src={bonusBadgeImg} alt="" aria-hidden="true" />
           <span>Bonus words</span>
           <span className="cost">{progress.bonus.length}</span>
         </button>
