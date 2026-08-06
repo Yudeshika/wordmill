@@ -83,7 +83,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
             <polyline
               points={line}
               fill="none"
-              stroke="var(--amber)"
+              stroke="var(--honey)"
               strokeWidth="0.022"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -95,7 +95,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
               y1={pts[selection[selection.length - 1]].y}
               x2={tail.x}
               y2={tail.y}
-              stroke="var(--amber)"
+              stroke="var(--honey)"
               strokeWidth="0.022"
               strokeLinecap="round"
               opacity="0.55"

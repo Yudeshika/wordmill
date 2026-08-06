@@ -228,9 +228,6 @@ export default function App() {
   }
 
   const previewWord = flash ? flash.word : selection.map((i) => letters[i]).join('');
-  const previewClass =
-    'preview' +
-    (flash ? ' ' + (flash.kind === 'seen' || flash.kind === 'collected' ? 'wrong' : flash.kind) : '');
   const note =
     flash && flash.kind === 'bonus'
       ? `new bonus word · +${BONUS_REWARD}`
@@ -239,23 +236,30 @@ export default function App() {
         : flash && flash.kind === 'seen'
           ? 'already found'
           : null;
+  const previewClass =
+    'preview' +
+    (!previewWord && !note ? ' idle' : '') +
+    (flash ? ' ' + (flash.kind === 'seen' || flash.kind === 'collected' ? 'wrong' : flash.kind) : '');
 
   return (
     <div className={TILES_3D ? 'app tiles-3d' : 'app'}>
-      <div className="hud">
-        <div>
-          <div className="hud-label">{MODES[progress.mode].name}</div>
-          <div className="hud-value">{currentLevel}</div>
-        </div>
-        <div className="hud-center">
-          <div className="hud-label">Words</div>
-          <div className="hud-value">
-            {progress.solved.length} / {level.words.length}
+      <header className="hud">
+        <div className="hud-section hud-level">
+          <span className="mode-mark" aria-hidden="true">✦</span>
+          <div>
+            <div className="hud-label">{MODES[progress.mode].name}</div>
+            <div className="hud-value"><span className="value-prefix">Level</span> {currentLevel}</div>
           </div>
         </div>
-        <div className="hud-right">
-          <div className="coins">
-            <span className="coin-dot" />
+        <div className="hud-section hud-center">
+          <div className="hud-label">Words found</div>
+          <div className="hud-value">
+            {progress.solved.length} <span className="value-divider">/</span> {level.words.length}
+          </div>
+        </div>
+        <div className="hud-section hud-right">
+          <div className="coins" aria-label={`${progress.coins} coins`}>
+            <span className="coin-dot" aria-hidden="true">✦</span>
             {progress.coins}
           </div>
           <button className="gear" onClick={() => setShowSettings(true)} aria-label="Settings">
@@ -265,8 +269,9 @@ export default function App() {
             </svg>
           </button>
         </div>
-      </div>
+      </header>
 
+      <main className="play-area">
       {progress.board === 'rows' ? (
         <WordRows
           level={level}
@@ -278,15 +283,17 @@ export default function App() {
         <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
       )}
 
-      <div className={previewClass}>
+      <div className={previewClass} aria-live="polite">
         {note ? (
           <span className={'preview-note' + (flash.kind === 'bonus' ? ' gain' : '')}>{note}</span>
-        ) : (
+        ) : previewWord ? (
           previewWord.split('').map((ch, i) => (
-            <span className="preview-tile" key={i}>
+            <span className="preview-letter" key={i}>
               {ch.toUpperCase()}
             </span>
           ))
+        ) : (
+          <span className="preview-placeholder">Build a word</span>
         )}
       </div>
 
@@ -298,14 +305,20 @@ export default function App() {
         onShuffle={() => setRotation((r) => r + 1)}
       />
 
-      <div className="actions">
+      </main>
+
+      <footer className="actions">
         <button className="btn" onClick={takeHint} disabled={progress.coins < HINT_COST}>
-          Hint <span className="cost">{HINT_COST}</span>
+          <span className="action-icon" aria-hidden="true">✦</span>
+          <span>Hint</span>
+          <span className="cost">{HINT_COST}</span>
         </button>
         <button className="btn" onClick={() => setShowBonus(true)}>
-          Bonus <span className="cost">{progress.bonus.length}</span>
+          <span className="action-icon" aria-hidden="true">★</span>
+          <span>Bonus words</span>
+          <span className="cost">{progress.bonus.length}</span>
         </button>
-      </div>
+      </footer>
 
       {showSettings && (
         <div className="sheet" onClick={() => setShowSettings(false)}>
