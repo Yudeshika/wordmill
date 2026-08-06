@@ -181,6 +181,31 @@ button:focus-visible { outline: 3px solid rgba(228,168,47,.45); outline-offset: 
 .btn-primary { min-height:48px; border-radius:14px; background:linear-gradient(180deg,var(--sunflower-bright),var(--sunflower)); border:1px solid var(--honey); box-shadow:0 4px 0 #d19a24; color:var(--cocoa); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
 .link { font-size:11px; color:var(--cocoa-soft); text-decoration:underline; text-underline-offset:3px; }
 
+/* toast */
+.toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 80px);
+  left: 50%;
+  background: var(--cocoa);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  padding: 10px 20px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  animation: toast-life 2.8s ease forwards;
+}
+@keyframes toast-life {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  10%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(4px); }
+}
+
 @media (max-height: 740px) {
   .app { gap:8px; padding-top:calc(env(safe-area-inset-top) + 8px); }
   .hud { min-height:64px; }

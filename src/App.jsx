@@ -68,11 +68,22 @@ export default function App() {
   const [showBonus, setShowBonus] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [toast, setToast] = useState(null);
   const flashTimer = useRef(null);
+  const toastTimer = useRef(null);
+
+  const showToast = useCallback((msg) => {
+    clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
+  }, []);
 
   useEffect(() => {
     loadDictionary().then(setDict).catch((e) => setError(e.message));
-    return () => clearTimeout(flashTimer.current);
+    return () => {
+      clearTimeout(flashTimer.current);
+      clearTimeout(toastTimer.current);
+    };
   }, []);
 
   const currentLevel = progress.levels[progress.mode];
@@ -173,6 +184,8 @@ export default function App() {
 
   const setBoard = (board) => {
     setProgress((p) => ({ ...p, board }));
+    setShowSettings(false);
+    if (board === 'rows') showToast('Shortest words first, A – Z within each length');
   };
 
   const switchMode = (mode) => {
@@ -408,6 +421,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {toast && <div className="toast" role="status">{toast}</div>}
 
       {complete && (
         <div className="sheet">
