@@ -6,6 +6,10 @@ import { loadDictionary } from './game/dictionary.js';
 import { MODES, MODE_KEYS } from './game/generate.js';
 import { loadProgress, saveProgress, resetProgress } from './game/storage.js';
 import { CloseIcon, SoundIcon, MuteIcon, VibrateIcon } from './assets/icons/index.js';
+import coinImg from './assets/images/coin.png';
+import hintBadgeImg from './assets/images/hint-badge.png';
+import bonusBadgeImg from './assets/images/bonus-badge.png';
+import beeCornerImg from './assets/images/bee-corner.png';
 
 const BOARDS = [
   {
@@ -273,7 +277,7 @@ export default function App() {
         </div>
         <div className="hud-section hud-right">
           <div className="coins" aria-label={`${progress.coins} coins`}>
-            <span className="coin-dot" aria-hidden="true">✦</span>
+            <img src={coinImg} className="coin-img" aria-hidden="true" alt="" />
             {progress.coins}
           </div>
           <button className="gear" onClick={() => setShowSettings(true)} aria-label="Settings">
@@ -286,16 +290,20 @@ export default function App() {
       </header>
 
       <main className="play-area">
-      {progress.board === 'rows' ? (
-        <WordRows
-          level={level}
-          solved={progress.solved}
-          revealed={revealed}
-          justSolved={justSolved}
-        />
-      ) : (
-        <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
-      )}
+      <div className="board-frame">
+        <img src={beeCornerImg} className="bee-corner bee-corner--tl" aria-hidden="true" alt="" />
+        <img src={beeCornerImg} className="bee-corner bee-corner--br" aria-hidden="true" alt="" />
+        {progress.board === 'rows' ? (
+          <WordRows
+            level={level}
+            solved={progress.solved}
+            revealed={revealed}
+            justSolved={justSolved}
+          />
+        ) : (
+          <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
+        )}
+      </div>
 
       <div className={previewClass} aria-live="polite">
         {note ? (
@@ -323,12 +331,12 @@ export default function App() {
 
       <footer className="actions">
         <button className="btn" onClick={takeHint} disabled={progress.coins < HINT_COST}>
-          <span className="action-icon" aria-hidden="true">✦</span>
+          <img src={hintBadgeImg} className="action-badge" aria-hidden="true" alt="" />
           <span>Hint</span>
           <span className="cost">{HINT_COST}</span>
         </button>
         <button className="btn" onClick={() => setShowBonus(true)}>
-          <span className="action-icon" aria-hidden="true">★</span>
+          <img src={bonusBadgeImg} className="action-badge" aria-hidden="true" alt="" />
           <span>Bonus words</span>
           <span className="cost">{progress.bonus.length}</span>
         </button>
