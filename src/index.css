@@ -71,7 +71,7 @@ button:focus-visible { outline: 3px solid rgba(228,168,47,.45); outline-offset: 
 .value-prefix { font-family:var(--font-ui); font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--cocoa-soft); }
 .value-divider { color:var(--line); font-weight:500; }
 .coins { display:flex; align-items:center; gap:6px; font-size:15px; font-weight:700; white-space:nowrap; }
-.coin-dot { width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:11px; background:radial-gradient(circle at 35% 25%,#fff08d,var(--sunflower) 52%,var(--honey)); color:#8a5d10; box-shadow:inset 0 0 0 2px rgba(255,255,255,.45), 0 3px 7px rgba(91,65,25,.17); }
+.coin-dot { width:40px; height:40px; object-fit:contain; flex:0 0 auto; filter:drop-shadow(0 2px 4px rgba(91,65,25,.35)) drop-shadow(0 1px 1px rgba(91,65,25,.25)); }
 .gear { width:38px; height:38px; flex:0 0 auto; border-radius:12px; display:grid; place-items:center; color:var(--marigold); background:var(--surface-soft); box-shadow:inset 0 0 0 1px var(--line); transition:transform .15s ease, background .15s ease; }
 .gear:active { transform:scale(.94); background:var(--surface-warm); }
 
@@ -155,7 +155,11 @@ button:focus-visible { outline: 3px solid rgba(228,168,47,.45); outline-offset: 
 .btn { min-height:58px; border-radius:18px; background:linear-gradient(180deg,#f8d96e,#efc44b); border:1px solid #c79725; box-shadow:0 4px 0 #d19a24,0 8px 16px rgba(91,65,25,.14),inset 0 1px 0 rgba(255,255,255,.5); font-size:var(--ui-label-size); letter-spacing:.06em; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:7px; font-weight:var(--ui-label-weight); }
 .btn:active { transform:translateY(2px); box-shadow:0 2px 0 #d19a24,0 5px 10px rgba(91,65,25,.12); }
 .btn[disabled] { opacity:.5; filter:saturate(.5); }
-.action-icon { width:26px; height:26px; display:grid; place-items:center; border-radius:50%; background:rgba(255,253,247,.62); box-shadow:inset 0 0 0 1px rgba(128,91,20,.2); font-size:12px; }
+.action-icon { width:32px; height:32px; object-fit:contain; flex:0 0 auto; filter:drop-shadow(0 2px 5px rgba(91,65,25,.4)) drop-shadow(0 1px 2px rgba(91,65,25,.3)); }
+.board-corner-tl,
+.board-corner-br { position:absolute; width:145px; height:145px; object-fit:contain; pointer-events:none; z-index:2; }
+.board-corner-tl { top:-18px; left:-18px; }
+.board-corner-br { bottom:-18px; right:-18px; transform:rotate(180deg); }
 .btn .cost { color:#9d5a0e; font-size:13px; }
 
 /* sheets */

@@ -46,6 +46,7 @@ const MILD = `
   fart puke
   wank
   bimbo floozy
+  hoe sex gay
 `;
 
 // Deliberately no '-ist': "ass" + "ist" would take out "assist".

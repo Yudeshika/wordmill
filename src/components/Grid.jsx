@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import beeCornerImg from '../assets/images/bee-corner.png';
 
 export default function Grid({ level, solved, revealed, justSolved }) {
   const wrapRef = useRef(null);
@@ -68,6 +69,8 @@ export default function Grid({ level, solved, revealed, justSolved }) {
 
   return (
     <div className="board" ref={wrapRef}>
+      <img className="board-corner-tl" src={beeCornerImg} alt="" aria-hidden="true" />
+      <img className="board-corner-br" src={beeCornerImg} alt="" aria-hidden="true" />
       <div
         className="grid"
         style={{

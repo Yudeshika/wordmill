@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import beeCornerImg from '../assets/images/bee-corner.png';
 
 /**
  * The second board style: instead of an interlocking crossword, each target word
@@ -31,6 +32,8 @@ export default function WordRows({ level, solved, revealed, justSolved }) {
 
   return (
     <div className="board" ref={wrapRef}>
+      <img className="board-corner-tl" src={beeCornerImg} alt="" aria-hidden="true" />
+      <img className="board-corner-br" src={beeCornerImg} alt="" aria-hidden="true" />
       <div className="rows" style={{ '--cell': cell + 'px' }}>
         {rows.map((word) => {
           const isSolved = solved.includes(word);

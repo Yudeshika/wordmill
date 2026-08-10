@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { ShuffleIcon } from '../assets/icons/index.js';
+import { sounds, vibrate } from '../game/audio.js';
 
 const RING = 0.345;
 const TILE = 0.2;
@@ -12,7 +13,7 @@ function positions(count) {
   });
 }
 
-export default function Wheel({ letters, selection, onChange, onSubmit, onShuffle }) {
+export default function Wheel({ letters, selection, onChange, onSubmit, onShuffle, soundOn, vibrateOn }) {
   const ref = useRef(null);
   const [cursor, setCursor] = useState(null);
   const pts = positions(letters.length);
@@ -40,6 +41,10 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
     const p = locate(event);
     setCursor(p);
     const hit = hitTest(p);
+    if (hit >= 0) {
+      if (soundOn) sounds.tap();
+      if (vibrateOn) vibrate(12);
+    }
     onChange(hit >= 0 ? [hit] : []);
   };
 
@@ -52,6 +57,8 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
     if (selection.length >= 2 && hit === selection[selection.length - 2]) {
       onChange(selection.slice(0, -1));
     } else if (!selection.includes(hit)) {
+      if (soundOn) sounds.tap();
+      if (vibrateOn) vibrate(12);
       onChange([...selection, hit]);
     }
   };
