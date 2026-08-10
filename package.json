@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "build:vocab": "node scripts/build-vocabulary/pipeline.js",
+    "build:vocab:dry": "node scripts/build-vocabulary/pipeline.js --dry-run",
+    "build:vocab:fast": "node scripts/build-vocabulary/pipeline.js --skip-llm"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
@@ -17,6 +20,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@vitejs/plugin-react": "^4.3.4",
     "vite": "^5.4.11",
     "vite-plugin-pwa": "^0.21.1"

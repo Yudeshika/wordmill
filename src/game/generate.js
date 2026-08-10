@@ -1,17 +1,15 @@
 import { mulberry32, counts, fitsIn, shuffled } from './util.js';
 import { packWords } from './pack.js';
 import { SHORT_WORDS } from './shortwords.js';
-import { BLOCKED } from './blocklist.js';
-import { isOffensive } from './offensive.js';
 
-// Frequency-rank cutoffs into the common list (which is ordered by frequency).
-// "Standard" keeps every word one you'd recognise. "Wide" reaches further down the
-// list and is deliberately reserved for the deep end of Hard — obscurity is the
-// lever that makes a puzzle feel unfair rather than difficult, so it arrives late.
-const STANDARD_BASE = 3500;
-const STANDARD_TARGET = 3500;
-const WIDE_BASE = 5500;
-const WIDE_TARGET = 6500;
+// Rank cutoffs into approved_common.txt, which is sorted by ESDB tier then alpha.
+// "Standard" keeps every word one you'd recognise (ESDB tier ≤ 35). "Wide" reaches
+// further and is reserved for the deep end of Hard — obscurity is the lever that
+// makes a puzzle feel unfair rather than difficult, so it arrives late.
+const STANDARD_BASE = 18807;
+const STANDARD_TARGET = 18807;
+const WIDE_BASE = 25541;
+const WIDE_TARGET = 30463;
 
 const band = (until, len, target, max, shorts, wide = false) => ({
   until,
@@ -87,7 +85,6 @@ export function buildIndex(commonWords) {
     counts: counts(word),
     mask: maskOf(word),
     plural: isPlural(word, set),
-    blocked: BLOCKED.has(word) || isOffensive(word)
   }));
 
   const byLength = new Map();
@@ -104,7 +101,6 @@ function subWords(base, index, targetRank) {
   const out = [];
   for (const e of index.entries) {
     if (e.word.length > base.length || e.word === base) continue;
-    if (e.blocked) continue;
     if (e.rank > targetRank) continue;
     if (e.word.length === 3 && !SHORT_WORDS.has(e.word)) continue;
     if ((e.mask & ~baseMask) !== 0) continue; // cheap reject before the full count check
@@ -191,7 +187,6 @@ export function createPlanner(index, modeKey = 'normal') {
     const bySig = new Map();
     for (let len = band.len[0]; len <= band.len[1]; len++) {
       for (const e of index.byLength.get(len) || []) {
-        if (e.blocked) continue;
         if (e.rank > band.baseRank) continue;
         if (e.plural) continue; // never build a level around a plural
         if (new Set(e.word).size < e.word.length - 1) continue; // too many repeated letters
