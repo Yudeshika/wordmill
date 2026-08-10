@@ -5,12 +5,13 @@ import Wheel from './components/Wheel.jsx';
 import { loadDictionary } from './game/dictionary.js';
 import { MODES, MODE_KEYS } from './game/generate.js';
 import { loadProgress, saveProgress, resetProgress } from './game/storage.js';
+import { CloseIcon, SoundIcon, MuteIcon, VibrateIcon } from './assets/icons/index.js';
 
 const BOARDS = [
   {
     key: 'crossword',
     name: 'Crossword',
-    blurb: 'Words interlock. Shared letters give you a way in.',
+    // blurb: 'Words interlock. Shared letters give you a way in.',
     art: (
       <svg viewBox="0 0 34 26" width="34" height="26" aria-hidden="true">
         <g fill="currentColor">
@@ -29,7 +30,7 @@ const BOARDS = [
   {
     key: 'rows',
     name: 'Word list',
-    blurb: 'One row per word. You only know how long each is.',
+    // blurb: 'One row per word. You only know how long each is.',
     art: (
       <svg viewBox="0 0 34 26" width="34" height="26" aria-hidden="true">
         <g fill="currentColor">
@@ -258,7 +259,7 @@ export default function App() {
     <div className={TILES_3D ? 'app tiles-3d' : 'app'}>
       <header className="hud">
         <div className="hud-section hud-level">
-          <span className="mode-mark" aria-hidden="true">✦</span>
+          {/* <span className="mode-mark" aria-hidden="true">✦</span> */}
           <div>
             <div className="hud-label">{MODES[progress.mode].name}</div>
             <div className="hud-value"><span className="value-prefix">Level</span> {currentLevel}</div>
@@ -336,7 +337,12 @@ export default function App() {
       {showSettings && (
         <div className="sheet" onClick={() => setShowSettings(false)}>
           <div className="sheet-card scrollable" onClick={(e) => e.stopPropagation()}>
-            <h2 className="sheet-title">Settings</h2>
+            <div className="sheet-header">
+              <h2 className="sheet-title">Settings</h2>
+              <button className="sheet-close" onClick={() => setShowSettings(false)} aria-label="Close settings">
+                <CloseIcon size={20} />
+              </button>
+            </div>
 
             <div>
               <p className="hud-label">Board</p>
@@ -377,6 +383,26 @@ export default function App() {
                 </button>
               ))}
             </div>
+            <p className="hud-label">Audio &amp; Haptics</p>
+            <div className="toggles">
+              <button
+                className={'toggle' + (progress.sound ? ' on' : '')}
+                onClick={() => setProgress((p) => ({ ...p, sound: !p.sound }))}
+                aria-pressed={progress.sound}
+              >
+                {progress.sound ? <SoundIcon size={18} /> : <MuteIcon size={18} />}
+                <span>{progress.sound ? 'Sound on' : 'Sound off'}</span>
+              </button>
+              <button
+                className={'toggle' + (progress.vibrate ? ' on' : '')}
+                onClick={() => setProgress((p) => ({ ...p, vibrate: !p.vibrate }))}
+                aria-pressed={progress.vibrate}
+              >
+                <VibrateIcon size={18} />
+                <span>{progress.vibrate ? 'Vibrate on' : 'Vibrate off'}</span>
+              </button>
+            </div>
+
             <button className="link" onClick={startOver}>
               Reset all progress
             </button>

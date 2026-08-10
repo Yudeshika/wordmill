@@ -28,7 +28,7 @@ export const MODES = {
   easy: {
     key: 'easy',
     name: 'Easy',
-    blurb: 'Short words, few of them. Nothing obscure, ever.',
+    // blurb: 'Short words, few of them. Nothing obscure, ever.',
     bands: [
       band(15, [4, 4], 4, 5, 1),
       band(40, [5, 5], 4, 6, 2),
@@ -38,7 +38,7 @@ export const MODES = {
   normal: {
     key: 'normal',
     name: 'Normal',
-    blurb: 'Ramps from 4 letters to 7. Words stay familiar throughout.',
+    // blurb: 'Ramps from 4 letters to 7. Words stay familiar throughout.',
     bands: [
       band(8, [4, 4], 4, 5, 1),
       band(20, [5, 5], 5, 6, 1),
@@ -50,7 +50,7 @@ export const MODES = {
   hard: {
     key: 'hard',
     name: 'Hard',
-    blurb: 'Starts at 5 letters and fills bigger grids. Past level 60 the word pool widens.',
+    // blurb: 'Starts at 5 letters and fills bigger grids. Past level 60 the word pool widens.',
     bands: [
       band(5, [5, 5], 5, 6, 1),
       band(15, [6, 6], 6, 7, 1),
