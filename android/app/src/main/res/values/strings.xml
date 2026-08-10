@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">WordWheel</string>
-    <string name="title_activity_main">WordWheel</string>
-    <string name="package_name">com.sankhapali.wordwheel</string>
-    <string name="custom_url_scheme">com.sankhapali.wordwheel</string>
-</resources>
