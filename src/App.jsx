@@ -5,6 +5,7 @@ import Wheel from './components/Wheel.jsx';
 import { loadDictionary } from './game/dictionary.js';
 import { MODES, MODE_KEYS } from './game/generate.js';
 import { loadProgress, saveProgress, resetProgress } from './game/storage.js';
+import { playTap, playCorrect, playBonus, playWrong, playComplete, vibrateTap, vibrateCorrect, vibrateBonus, vibrateWrong, vibrateComplete } from './game/audio.js';
 import { CloseIcon, SoundIcon, MuteIcon, VibrateIcon } from './assets/icons/index.js';
 import coinImg from './assets/images/coin.png';
 import hintBadgeImg from './assets/images/hint-badge.png';
@@ -76,6 +77,10 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const flashTimer = useRef(null);
   const toastTimer = useRef(null);
+  const soundRef = useRef(progress.sound);
+  const vibrateRef = useRef(progress.vibrate);
+  useEffect(() => { soundRef.current = progress.sound; }, [progress.sound]);
+  useEffect(() => { vibrateRef.current = progress.vibrate; }, [progress.vibrate]);
 
   const showToast = useCallback((msg) => {
     clearTimeout(toastTimer.current);
@@ -103,7 +108,11 @@ export default function App() {
   }, [progress]);
 
   useEffect(() => {
-    if (level && progress.solved.length === level.words.length) setComplete(true);
+    if (level && progress.solved.length === level.words.length) {
+      setComplete(true);
+      if (soundRef.current) playComplete();
+      if (vibrateRef.current) vibrateComplete();
+    }
   }, [level, progress.solved.length]);
 
   const letters = useMemo(() => {
@@ -127,12 +136,16 @@ export default function App() {
       }
       if (progress.solved.includes(word)) {
         showFlash({ word, kind: 'seen' });
+        if (soundRef.current) playWrong();
+        if (vibrateRef.current) vibrateWrong();
         return;
       }
       if (level.words.includes(word)) {
         setJustSolved(word);
         setTimeout(() => setJustSolved(null), 700);
         showFlash({ word, kind: 'correct' });
+        if (soundRef.current) playCorrect();
+        if (vibrateRef.current) vibrateCorrect();
         setProgress((p) => ({ ...p, solved: [...p.solved, word] }));
         return;
       }
@@ -141,9 +154,13 @@ export default function App() {
         // one again on a later level is acknowledged but not rewarded twice.
         if (progress.bonus.includes(word)) {
           showFlash({ word, kind: 'collected' });
+          if (soundRef.current) playWrong();
+          if (vibrateRef.current) vibrateWrong();
           return;
         }
         showFlash({ word, kind: 'bonus' });
+        if (soundRef.current) playBonus();
+        if (vibrateRef.current) vibrateBonus();
         setProgress((p) => ({
           ...p,
           coins: p.coins + BONUS_REWARD,
@@ -152,6 +169,8 @@ export default function App() {
         }));
         return;
       }
+      if (soundRef.current) playWrong();
+      if (vibrateRef.current) vibrateWrong();
       showFlash({ word, kind: 'wrong' });
     },
     [level, progress.solved, progress.bonus, dict, complete, showFlash]
@@ -322,7 +341,13 @@ export default function App() {
       <Wheel
         letters={letters}
         selection={selection}
-        onChange={setSelection}
+        onChange={(sel) => {
+          if (sel.length > selection.length) {
+            if (soundRef.current) playTap();
+            if (vibrateRef.current) vibrateTap();
+          }
+          setSelection(sel);
+        }}
         onSubmit={submit}
         onShuffle={() => setRotation((r) => r + 1)}
       />
