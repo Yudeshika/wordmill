@@ -71,7 +71,7 @@ export default function App() {
   const [flash, setFlash] = useState(null);
   const [justSolved, setJustSolved] = useState(null);
   const [revealed, setRevealed] = useState([]);
-  const [showBonus, setShowBonus] = useState(false);
+  const [coinClaim, setCoinClaim] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [complete, setComplete] = useState(false);
   const [toast, setToast] = useState(null);
@@ -163,7 +163,7 @@ export default function App() {
         if (vibrateRef.current) vibrateBonus();
         setProgress((p) => ({
           ...p,
-          coins: p.coins + BONUS_REWARD,
+          unclaimedCoins: p.unclaimedCoins + BONUS_REWARD,
           bonus: [...p.bonus, word],
           bonusLevel: [...p.bonusLevel, word]
         }));
@@ -175,6 +175,13 @@ export default function App() {
     },
     [level, progress.solved, progress.bonus, dict, complete, showFlash]
   );
+
+  const claimCoins = useCallback(() => {
+    if (!progress.unclaimedCoins) return;
+    setProgress((p) => ({ ...p, coins: p.coins + p.unclaimedCoins, unclaimedCoins: 0 }));
+    setCoinClaim(true);
+    setTimeout(() => setCoinClaim(false), 600);
+  }, [progress.unclaimedCoins]);
 
   const takeHint = () => {
     if (!level || progress.coins < HINT_COST) return;
@@ -295,7 +302,7 @@ export default function App() {
           </div>
         </div>
         <div className="hud-section hud-right">
-          <div className="coins" aria-label={`${progress.coins} coins`}>
+          <div className={'coins' + (coinClaim ? ' claimed' : '')} aria-label={`${progress.coins} coins`}>
             <img src={coinImg} className="coin-img" aria-hidden="true" alt="" />
             {progress.coins}
           </div>
@@ -360,10 +367,16 @@ export default function App() {
           <span>Hint</span>
           <span className="cost">{HINT_COST}</span>
         </button>
-        <button className="btn" onClick={() => setShowBonus(true)}>
+        <button
+          className={'btn' + (progress.unclaimedCoins > 0 ? ' has-unclaimed' : '')}
+          disabled={progress.unclaimedCoins === 0}
+          onClick={claimCoins}
+        >
           <img src={bonusBadgeImg} className="action-badge" aria-hidden="true" alt="" />
-          <span>Bonus words</span>
-          <span className="cost">{progress.bonus.length}</span>
+          <span>Claim coins</span>
+          {progress.unclaimedCoins > 0 && (
+            <span className="cost">+{progress.unclaimedCoins}</span>
+          )}
         </button>
       </footer>
 
@@ -399,7 +412,7 @@ export default function App() {
             <p className="hud-label">Difficulty</p>
             <p className="sheet-body">
               Each difficulty keeps its own level, so you can switch and come back without
-              losing your place. Your bonus word collection is shared.
+              losing your place.
             </p>
             <div className="modes">
               {MODE_KEYS.map((key) => (
@@ -443,43 +456,6 @@ export default function App() {
         </div>
       )}
 
-      {showBonus && (
-        <div className="sheet" onClick={() => setShowBonus(false)}>
-          <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
-            <h2 className="sheet-title">Collection</h2>
-            <p className="sheet-body">
-              Real words you found that weren't in the grid. Once collected, a word stays
-              collected — {progress.bonus.length} so far.
-            </p>
-            {progress.bonusLevel.length > 0 && (
-              <div>
-                <p className="hud-label">New on this level</p>
-                <div className="chips">
-                  {progress.bonusLevel.map((w) => (
-                    <span className="chip new" key={w}>
-                      {w}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {progress.bonus.length > 0 ? (
-              <div className="chips scroll">
-                {progress.bonus.map((w) => (
-                  <span className="chip" key={w}>
-                    {w}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="sheet-body">Nothing collected yet.</p>
-            )}
-            <button className="btn-primary" onClick={() => setShowBonus(false)}>
-              Back to puzzle
-            </button>
-          </div>
-        </div>
-      )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
 
@@ -490,8 +466,8 @@ export default function App() {
             <p className="sheet-body">
               {level.words.length} words found
               {progress.bonusLevel.length > 0
-                ? `, plus ${progress.bonusLevel.length} new for the collection`
-                : ''}. Take 10 coins.
+                ? `, plus ${progress.bonusLevel.length} new bonus ${progress.bonusLevel.length === 1 ? 'word' : 'words'}`
+                : ''}. +10 coins.
             </p>
             <button className="btn-primary" onClick={nextLevel}>
               Next level
