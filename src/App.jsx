@@ -77,6 +77,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const flashTimer = useRef(null);
   const toastTimer = useRef(null);
+  const completeTimer = useRef(null);
   const soundRef = useRef(progress.sound);
   const vibrateRef = useRef(progress.vibrate);
   useEffect(() => { soundRef.current = progress.sound; }, [progress.sound]);
@@ -93,6 +94,7 @@ export default function App() {
     return () => {
       clearTimeout(flashTimer.current);
       clearTimeout(toastTimer.current);
+      clearTimeout(completeTimer.current);
     };
   }, []);
 
@@ -109,9 +111,9 @@ export default function App() {
 
   useEffect(() => {
     if (level && progress.solved.length === level.words.length) {
-      setComplete(true);
       if (soundRef.current) playComplete();
       if (vibrateRef.current) vibrateComplete();
+      completeTimer.current = setTimeout(() => setComplete(true), 2000);
     }
   }, [level, progress.solved.length]);
 
