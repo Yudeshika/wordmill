@@ -5,6 +5,7 @@ const empty = () => ({
   board: 'crossword', // 'crossword' | 'rows'
   levels: { easy: 1, normal: 1, hard: 1 }, // progress is tracked per difficulty
   coins: 40,
+  unclaimedCoins: 0, // bonus word coins waiting to be claimed
   sound: true,
   vibrate: true,
   solved: [], // grid words solved on the current level
@@ -27,6 +28,7 @@ export function loadProgress() {
       board: ['crossword', 'rows'].includes(parsed.board) ? parsed.board : 'crossword',
       levels,
       coins: Number.isFinite(parsed.coins) ? parsed.coins : base.coins,
+      unclaimedCoins: Number.isFinite(parsed.unclaimedCoins) ? parsed.unclaimedCoins : 0,
       sound: parsed.sound !== false,
       vibrate: parsed.vibrate !== false,
       solved: Array.isArray(parsed.solved) ? parsed.solved : [],
