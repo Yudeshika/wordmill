@@ -14,6 +14,7 @@ function positions(count) {
 
 export default function Wheel({ letters, selection, onChange, onSubmit, onShuffle }) {
   const ref = useRef(null);
+  const dragging = useRef(false);
   const [cursor, setCursor] = useState(null);
   const pts = positions(letters.length);
 
@@ -37,6 +38,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   const begin = (event) => {
     if (event.target.closest('.shuffle')) return;
     ref.current.setPointerCapture(event.pointerId);
+    dragging.current = true;
     const p = locate(event);
     setCursor(p);
     const hit = hitTest(p);
@@ -44,7 +46,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const move = (event) => {
-    if (!ref.current.hasPointerCapture(event.pointerId)) return;
+    if (!dragging.current) return;
     const p = locate(event);
     setCursor(p);
     const hit = hitTest(p);
@@ -57,6 +59,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const end = (event) => {
+    dragging.current = false;
     if (ref.current.hasPointerCapture(event.pointerId)) {
       ref.current.releasePointerCapture(event.pointerId);
     }
