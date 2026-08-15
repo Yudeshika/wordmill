@@ -70,10 +70,15 @@ export default function App() {
   const [rotation, setRotation] = useState(0);
   const [flash, setFlash] = useState(null);
   const [justSolved, setJustSolved] = useState(null);
+  const [justHinted, setJustHinted] = useState(null);
   const [revealed, setRevealed] = useState([]);
   const [coinClaim, setCoinClaim] = useState(false);
+  const [flyingCoins, setFlyingCoins] = useState([]);
+  const claimBtnRef = useRef(null);
+  const coinHudRef = useRef(null);
   const [showSettings, setShowSettings] = useState(false);
   const [complete, setComplete] = useState(false);
+  const [showWin, setShowWin] = useState(false);
   const [toast, setToast] = useState(null);
   const flashTimer = useRef(null);
   const toastTimer = useRef(null);
@@ -113,7 +118,11 @@ export default function App() {
     if (level && progress.solved.length === level.words.length) {
       if (soundRef.current) playComplete();
       if (vibrateRef.current) vibrateComplete();
-      completeTimer.current = setTimeout(() => setComplete(true), 2000);
+      setShowWin(true);
+      completeTimer.current = setTimeout(() => {
+        setShowWin(false);
+        setComplete(true);
+      }, 3200);
     }
   }, [level, progress.solved.length]);
 
@@ -180,9 +189,41 @@ export default function App() {
 
   const claimCoins = useCallback(() => {
     if (!progress.unclaimedCoins) return;
-    setProgress((p) => ({ ...p, coins: p.coins + p.unclaimedCoins, unclaimedCoins: 0 }));
-    setCoinClaim(true);
-    setTimeout(() => setCoinClaim(false), 600);
+
+    const fromEl = claimBtnRef.current;
+    const toEl = coinHudRef.current;
+
+    if (!fromEl || !toEl) {
+      setProgress((p) => ({ ...p, coins: p.coins + p.unclaimedCoins, unclaimedCoins: 0 }));
+      return;
+    }
+
+    const from = fromEl.getBoundingClientRect();
+    const to = toEl.getBoundingClientRect();
+    const count = Math.min(Math.ceil(progress.unclaimedCoins / BONUS_REWARD), 5);
+    const FLIGHT = 500;
+    const STAGGER = 80;
+
+    setFlyingCoins(
+      Array.from({ length: count }, (_, i) => ({
+        id: Date.now() + i,
+        x: from.left + from.width / 2 - 14,
+        y: from.top + from.height / 2 - 14,
+        dx: to.left + to.width / 2 - 14 - (from.left + from.width / 2 - 14),
+        dy: to.top + to.height / 2 - 14 - (from.top + from.height / 2 - 14),
+        delay: i * STAGGER,
+      }))
+    );
+
+    // Transfer coins when first one lands
+    setTimeout(() => {
+      setProgress((p) => ({ ...p, coins: p.coins + p.unclaimedCoins, unclaimedCoins: 0 }));
+      setCoinClaim(true);
+      setTimeout(() => setCoinClaim(false), 600);
+    }, FLIGHT);
+
+    // Clean up after last coin lands
+    setTimeout(() => setFlyingCoins([]), FLIGHT + (count - 1) * STAGGER + 100);
   }, [progress.unclaimedCoins]);
 
   const takeHint = () => {
@@ -199,10 +240,13 @@ export default function App() {
     const pick = options[Math.floor(Math.random() * options.length)];
     setRevealed((r) => [...r, pick]);
     setProgress((p) => ({ ...p, coins: p.coins - HINT_COST }));
+    setJustHinted(pick);
+    setTimeout(() => setJustHinted(null), 800);
   };
 
   const nextLevel = () => {
     setComplete(false);
+    setShowWin(false);
     setRevealed([]);
     setSelection([]);
     setRotation(0);
@@ -304,7 +348,7 @@ export default function App() {
           </div>
         </div>
         <div className="hud-section hud-right">
-          <div className={'coins' + (coinClaim ? ' claimed' : '')} aria-label={`${progress.coins} coins`}>
+          <div ref={coinHudRef} className={'coins' + (coinClaim ? ' claimed' : '')} aria-label={`${progress.coins} coins`}>
             <img src={coinImg} className="coin-img" aria-hidden="true" alt="" />
             {progress.coins}
           </div>
@@ -327,9 +371,10 @@ export default function App() {
             solved={progress.solved}
             revealed={revealed}
             justSolved={justSolved}
+            justHinted={justHinted}
           />
         ) : (
-          <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
+          <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} justHinted={justHinted} />
         )}
       </div>
 
@@ -370,6 +415,7 @@ export default function App() {
           <span className="cost">{HINT_COST}</span>
         </button>
         <button
+          ref={claimBtnRef}
           className={'btn' + (progress.unclaimedCoins > 0 ? ' has-unclaimed' : '')}
           disabled={progress.unclaimedCoins === 0}
           onClick={claimCoins}
@@ -458,6 +504,29 @@ export default function App() {
         </div>
       )}
 
+
+      {flyingCoins.map((c) => (
+        <img
+          key={c.id}
+          src={coinImg}
+          className="flying-coin"
+          aria-hidden="true"
+          alt=""
+          style={{
+            left: c.x,
+            top: c.y,
+            '--dx': `${c.dx}px`,
+            '--dy': `${c.dy}px`,
+            '--delay': `${c.delay}ms`,
+          }}
+        />
+      ))}
+
+      {showWin && (
+        <div className="win-overlay" aria-hidden="true">
+          <img src={coinImg} className="win-coin" alt="" />
+        </div>
+      )}
 
       {toast && <div className="toast" role="status">{toast}</div>}
 
