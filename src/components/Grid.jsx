@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-export default function Grid({ level, solved, revealed, justSolved }) {
+export default function Grid({ level, solved, revealed, justSolved, justHinted }) {
   const wrapRef = useRef(null);
   const [cell, setCell] = useState(34);
 
@@ -52,12 +52,13 @@ export default function Grid({ level, solved, revealed, justSolved }) {
         continue;
       }
       const isHinted = !entry.solved && entry.refs.some((ref) => revealed.includes(ref));
+      const isJustHinted = !entry.solved && entry.refs.some((ref) => ref === justHinted);
       const cls = entry.solved ? 'cell filled' : isHinted ? 'cell hinted' : 'cell blank';
       const animate = entry.solved && entry.order !== null;
       cells.push(
         <div
           key={key}
-          className={animate ? cls + ' pop' : cls}
+          className={animate ? cls + ' pop' : isJustHinted ? cls + ' hint-pop' : cls}
           style={animate ? { animationDelay: entry.order * 45 + 'ms' } : undefined}
         >
           {entry.solved || isHinted ? entry.letter.toUpperCase() : ''}
