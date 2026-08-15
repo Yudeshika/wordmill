@@ -26,35 +26,54 @@ export const MODES = {
   easy: {
     key: 'easy',
     name: 'Easy',
-    // blurb: 'Short words, few of them. Nothing obscure, ever.',
+    blurb: 'Starts with 4-letter puzzles and gently grows. Familiar words only.',
     bands: [
-      band(15, [4, 4], 4, 5, 1),
-      band(40, [5, 5], 4, 6, 2),
-      band(Infinity, [5, 6], 5, 6, 2)
+      // Levels  1– 5: warm-up — 4-letter base, 3–4 words
+      band(5,        [4, 4], 3, 4, 1),
+      // Levels  6–20: comfortable — 4-letter base, 4–5 words
+      band(20,       [4, 4], 4, 5, 1),
+      // Levels 21–40: one new letter, word count stays the same
+      band(40,       [5, 5], 4, 5, 1),
+      // Levels 41–60: word count increases, letters stay at 5
+      band(60,       [5, 5], 5, 6, 2),
+      // Levels 61+:   slight stretch — 5–6 letter base
+      band(Infinity, [5, 6], 5, 6, 2),
     ]
   },
   normal: {
     key: 'normal',
     name: 'Normal',
-    // blurb: 'Ramps from 4 letters to 7. Words stay familiar throughout.',
+    blurb: 'Steady climb from 4 to 7 letters. One variable changes at a time.',
     bands: [
-      band(8, [4, 4], 4, 5, 1),
-      band(20, [5, 5], 5, 6, 1),
-      band(40, [5, 6], 6, 7, 2),
-      band(70, [6, 6], 6, 8, 2),
-      band(Infinity, [6, 7], 7, 8, 2)
+      // Levels  1– 5: intro — 4-letter base, strict 4–5 words
+      band(5,        [4, 4], 4, 5, 1),
+      // Levels  6–15: transition — 4–5 letter base, same word count
+      band(15,       [4, 5], 4, 5, 1),
+      // Levels 16–30: settled at 5 — word count steps up
+      band(30,       [5, 5], 5, 6, 1),
+      // Levels 31–55: stretch — 5–6 letter base, more words
+      band(55,       [5, 6], 6, 7, 2),
+      // Levels 56–80: settled at 6 — word count steady
+      band(80,       [6, 6], 6, 7, 2),
+      // Levels 81+:   deep end — 6–7 letter base, full grids
+      band(Infinity, [6, 7], 7, 8, 2),
     ]
   },
   hard: {
     key: 'hard',
     name: 'Hard',
-    // blurb: 'Starts at 5 letters and fills bigger grids. Past level 60 the word pool widens.',
+    blurb: 'No warm-up. Starts dense, reaches 7 letters, then the word pool widens.',
     bands: [
-      band(5, [5, 5], 5, 6, 1),
-      band(15, [6, 6], 6, 7, 1),
-      band(35, [6, 6], 7, 8, 2),
-      band(60, [6, 7], 7, 8, 2),
-      band(Infinity, [7, 7], 7, 8, 2, true)
+      // Levels  1–10: no warm-up — 5–6 letter base, dense grids
+      band(10,       [5, 6], 6, 7, 1),
+      // Levels 11–25: settled at 6 — maximum word count
+      band(25,       [6, 6], 7, 8, 2),
+      // Levels 26–50: consistent challenge — 6–7 letter base
+      band(50,       [6, 7], 7, 8, 2),
+      // Levels 51–75: max length — 7-letter base throughout
+      band(75,       [7, 7], 7, 8, 2),
+      // Levels 76+:   wide vocabulary — obscure words enter the pool
+      band(Infinity, [7, 7], 7, 8, 2, true),
     ]
   }
 };
