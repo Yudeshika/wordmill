@@ -228,12 +228,31 @@ export default function App() {
 
   const takeHint = () => {
     if (!level || progress.coins < HINT_COST) return;
+    const solvedSet = new Set(progress.solved);
+    // Build a map from grid cell key to all placements at that cell, so we can
+    // detect cells that are already visible because a crossing solved word is there.
+    const cellWords = new Map();
+    for (const p of level.placements) {
+      for (let i = 0; i < p.word.length; i++) {
+        const r = p.row + (p.dir === 'v' ? i : 0);
+        const c = p.col + (p.dir === 'h' ? i : 0);
+        const cellKey = r + ',' + c;
+        if (!cellWords.has(cellKey)) cellWords.set(cellKey, []);
+        cellWords.get(cellKey).push(p.word);
+      }
+    }
     const options = [];
-    for (const word of level.words) {
-      if (progress.solved.includes(word)) continue;
-      for (let i = 0; i < word.length; i++) {
-        const key = word + ':' + i;
-        if (!revealed.includes(key)) options.push(key);
+    for (const p of level.placements) {
+      if (solvedSet.has(p.word)) continue;
+      for (let i = 0; i < p.word.length; i++) {
+        const key = p.word + ':' + i;
+        if (revealed.includes(key)) continue;
+        // Skip cells already visible because a crossing solved word occupies them.
+        const r = p.row + (p.dir === 'v' ? i : 0);
+        const c = p.col + (p.dir === 'h' ? i : 0);
+        const sharers = cellWords.get(r + ',' + c) || [];
+        if (sharers.some((w) => solvedSet.has(w))) continue;
+        options.push(key);
       }
     }
     if (!options.length) return;
