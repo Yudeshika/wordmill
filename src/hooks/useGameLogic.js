@@ -137,6 +137,7 @@ export function useGameLogic({ dict, level, progress, setProgress }) {
 
   // Called by App when advancing levels or switching modes — resets all in-level state.
   const resetLevel = useCallback(() => {
+    clearTimeout(flashTimer.current);
     clearTimeout(completeTimer.current);
     clearTimeout(justSolvedTimer.current);
     clearTimeout(justHintedTimer.current);

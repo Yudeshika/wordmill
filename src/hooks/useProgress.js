@@ -9,8 +9,7 @@ export function useProgress() {
   }, [progress]);
 
   const switchMode = (mode) => {
-    if (mode === progress.mode) return;
-    setProgress((p) => ({ ...p, mode, solved: [], bonusLevel: [] }));
+    setProgress((p) => p.mode === mode ? p : { ...p, mode, solved: [], bonusLevel: [] });
   };
 
   const nextLevel = () => {
