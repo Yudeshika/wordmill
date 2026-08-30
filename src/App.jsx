@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Grid from './components/Grid.jsx';
 import WordRows from './components/WordRows.jsx';
 import Wheel from './components/Wheel.jsx';
@@ -8,7 +8,7 @@ import WinOverlay from './components/WinOverlay.jsx';
 import FlyingCoins from './components/FlyingCoins.jsx';
 import CompletionSheet from './components/CompletionSheet.jsx';
 import { useProgress } from './hooks/useProgress.js';
-import { useGameLogic } from './hooks/useGaleLogic.js';
+import { useGameLogic } from './hooks/useGameLogic.js';
 import { useCoinClaim } from './hooks/useCoinClaim.js';
 import { loadDictionary } from './game/dictionary.js';
 import { MODES } from './game/generate.js';
@@ -46,19 +46,16 @@ export default function App() {
 
   const { coinClaim, flyingCoins, claimBtnRef, coinHudRef, claimCoins } = useCoinClaim({ progress, setProgress });
 
-  const soundRef = useRef(progress.sound);
-  useEffect(() => { soundRef.current = progress.sound; }, [progress.sound]);
-
   useEffect(() => {
     loadDictionary().then(setDict).catch((e) => setError(e.message));
     return () => clearTimeout(toastTimer.current);
   }, []);
 
-  const showToast = useCallback((msg) => {
+  const showToast = (msg) => {
     clearTimeout(toastTimer.current);
     setToast(msg);
     toastTimer.current = setTimeout(() => setToast(null), 2800);
-  }, []);
+  };
 
   const letters = useMemo(() => {
     if (!level) return [];
@@ -67,34 +64,34 @@ export default function App() {
     return [...level.letters.slice(offset), ...level.letters.slice(0, offset)];
   }, [level, rotation]);
 
-  const handleNextLevel = useCallback(() => {
+  const handleNextLevel = () => {
     nextLevel();
     resetLevel();
     setSelection([]);
     setRotation(0);
-  }, [nextLevel, resetLevel]);
+  };
 
-  const handleSwitchMode = useCallback((mode) => {
+  const handleSwitchMode = (mode) => {
     setShowSettings(false);
     switchMode(mode);
     resetLevel();
     setSelection([]);
     setRotation(0);
-  }, [switchMode, resetLevel]);
+  };
 
-  const handleSetBoard = useCallback((board) => {
+  const handleSetBoard = (board) => {
     setBoard(board);
     setShowSettings(false);
     if (board === 'rows') showToast('Shortest words first, A – Z within each length');
-  }, [setBoard, showToast]);
+  };
 
-  const handleStartOver = useCallback(() => {
+  const handleStartOver = () => {
     startOver();
     resetLevel();
     setSelection([]);
     setRotation(0);
     setShowSettings(false);
-  }, [startOver, resetLevel]);
+  };
 
   if (error) {
     return (
