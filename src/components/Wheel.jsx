@@ -59,6 +59,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const end = (event) => {
+    if (!dragging.current) return; // pointerup and pointercancel can both fire; only handle once
     dragging.current = false;
     if (ref.current.hasPointerCapture(event.pointerId)) {
       ref.current.releasePointerCapture(event.pointerId);

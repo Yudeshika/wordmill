@@ -115,7 +115,7 @@ export default function App() {
   }, [progress]);
 
   useEffect(() => {
-    if (level && progress.solved.length === level.words.length) {
+    if (level && level.words.every((w) => progress.solved.includes(w))) {
       if (soundRef.current) playComplete();
       if (vibrateRef.current) vibrateComplete();
       setShowWin(true);
@@ -157,7 +157,7 @@ export default function App() {
         showFlash({ word, kind: 'correct' });
         if (soundRef.current) playCorrect();
         if (vibrateRef.current) vibrateCorrect();
-        setProgress((p) => ({ ...p, solved: [...p.solved, word] }));
+        setProgress((p) => p.solved.includes(word) ? p : { ...p, solved: [...p.solved, word] });
         return;
       }
       if (dict.valid.has(word)) {

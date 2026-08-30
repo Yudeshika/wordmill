@@ -79,7 +79,7 @@ export async function classifyWords(metadata, cacheFile) {
   // blocked by profanity or overrides) and are in ESDB tiers where
   // ambiguity is likely — common words (tier ≤ 35) rarely need LLM help.
   const toClassify = [...metadata.entries()]
-    .filter(([word, meta]) => !meta.llm && !meta.profane && meta.esdbTier > 35)
+    .filter(([word, meta]) => !meta.llm && !meta.profane)
     .map(([word]) => word);
 
   if (toClassify.length === 0) {
