@@ -96,6 +96,29 @@ function isPlural(word, set) {
   return false;
 }
 
+/**
+ * A word that is a detectable inflected form of another word in the set:
+ * gerund (-ing) or past tense/participle (-ed), with stemming rules for
+ * silent-e verbs (abating→abate) and doubled consonants (adding→add).
+ */
+function isInflection(word, set) {
+  if (word.length >= 6 && word.endsWith('ing')) {
+    const stem = word.slice(0, -3);
+    if (set.has(stem)) return true;
+    if (set.has(stem + 'e')) return true;
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] &&
+        set.has(stem.slice(0, -1))) return true;
+  }
+  if (word.length >= 5 && word.endsWith('ed')) {
+    const stem = word.slice(0, -2);
+    if (set.has(stem)) return true;
+    if (set.has(stem + 'e')) return true;
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] &&
+        set.has(stem.slice(0, -1))) return true;
+  }
+  return false;
+}
+
 export function buildIndex(commonWords) {
   const set = new Set(commonWords);
   const entries = commonWords.map((word, rank) => ({
@@ -104,6 +127,7 @@ export function buildIndex(commonWords) {
     counts: counts(word),
     mask: maskOf(word),
     plural: isPlural(word, set),
+    inflection: isInflection(word, set),
   }));
 
   const byLength = new Map();
@@ -153,6 +177,7 @@ function chooseTargets(base, subs, band, rng) {
       if (picked.length >= limit) return;
       if (chosen.has(e.word)) continue;
       if (e.plural && !allowPlural) continue;
+      if (e.inflection) continue;
       if (conflicts(e.word)) continue;
       picked.push(e.word);
       chosen.add(e.word);
@@ -208,6 +233,7 @@ export function createPlanner(index, modeKey = 'normal') {
       for (const e of index.byLength.get(len) || []) {
         if (e.rank > band.baseRank) continue;
         if (e.plural) continue; // never build a level around a plural
+        if (e.inflection) continue; // never build a level around a verb form
         if (new Set(e.word).size < e.word.length - 1) continue; // too many repeated letters
         const sig = signature(e.word);
         const held = bySig.get(sig);

@@ -49,6 +49,7 @@ const MAX_LEN = 7;
  * `override` fields after this call.
  */
 export function buildMetadata(esdbWords, profanitySet) {
+  const wordSet = new Set(esdbWords.keys());
   const metadata = new Map();
 
   for (const [word, esdb] of esdbWords) {
@@ -60,12 +61,40 @@ export function buildMetadata(esdbWords, profanitySet) {
       properNoun: esdb.proper,
       hacker:     esdb.hacker,  // ESDB 'hacker' category: tech abbreviations/jargon
       profane:    profanitySet.has(word),
+      inflection: isInflection(word, wordSet),
       llm:        null,     // filled by llm-classify.js
       override:   null,     // 'allow' | 'deny' | null, filled by overrides step
     });
   }
 
   return metadata;
+}
+
+/**
+ * True if the word is a detectable inflected form of another word in the set:
+ * gerund (-ing), past tense/participle (-ed), with stemming rules for
+ * silent-e verbs (abating→abate) and doubled consonants (adding→add).
+ * Comparatives/superlatives are intentionally omitted — too many false positives
+ * with common -er/-est words that are standalone nouns or adjectives.
+ */
+function isInflection(word, wordSet) {
+  // Gerund: "abating"→"abate", "adding"→"add", "acting"→"act"
+  if (word.length >= 6 && word.endsWith('ing')) {
+    const stem = word.slice(0, -3);
+    if (wordSet.has(stem)) return true;
+    if (wordSet.has(stem + 'e')) return true;
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] &&
+        wordSet.has(stem.slice(0, -1))) return true;
+  }
+  // Past tense / past participle: "abated"→"abate", "added"→"add", "acted"→"act"
+  if (word.length >= 5 && word.endsWith('ed')) {
+    const stem = word.slice(0, -2);
+    if (wordSet.has(stem)) return true;
+    if (wordSet.has(stem + 'e')) return true;
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] &&
+        wordSet.has(stem.slice(0, -1))) return true;
+  }
+  return false;
 }
 
 /** Apply manual overrides to the metadata map. */
@@ -115,6 +144,7 @@ export function isEligibleForPuzzle(meta) {
   if (meta.properNoun)           return false;
   if (meta.profane)              return false;
   if (meta.hacker)               return false;  // tech abbreviations/jargon from ESDB
+  if (meta.inflection)           return false;  // gerunds, past tenses — not puzzle-friendly
   if (meta.esdbTier > THRESHOLDS.PUZZLE) return false;
 
   const llm = llmFlags(meta);
