@@ -5,7 +5,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
  * gets its own row of blanks. Shorter words first, so the rows form a staircase
  * and the shape of the level reads at a glance.
  */
-export default function WordRows({ level, solved, revealed, justSolved }) {
+export default function WordRows({ level, solved, revealed, justSolved, justHinted }) {
   const wrapRef = useRef(null);
   const [cell, setCell] = useState(34);
 
@@ -38,12 +38,13 @@ export default function WordRows({ level, solved, revealed, justSolved }) {
             <div className="row" key={word}>
               {word.split('').map((ch, i) => {
                 const hinted = !isSolved && revealed.includes(word + ':' + i);
+                const isJustHinted = !isSolved && word + ':' + i === justHinted;
                 const cls = isSolved ? 'cell filled' : hinted ? 'cell hinted' : 'cell blank';
                 const animate = isSolved && justSolved === word;
                 return (
                   <div
                     key={i}
-                    className={animate ? cls + ' pop' : cls}
+                    className={animate ? cls + ' pop' : isJustHinted ? cls + ' hint-pop' : cls}
                     style={{
                       width: cell + 'px',
                       height: cell + 'px',

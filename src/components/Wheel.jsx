@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
+import { Icon } from './Icon.jsx';
 
 const RING = 0.345;
 const TILE = 0.2;
+const TILE_H = TILE * Math.sqrt(3) / 2; // flat-top hex: height = width × (√3/2)
 const HIT = 0.115;
 
 function positions(count) {
@@ -13,6 +15,7 @@ function positions(count) {
 
 export default function Wheel({ letters, selection, onChange, onSubmit, onShuffle }) {
   const ref = useRef(null);
+  const dragging = useRef(false);
   const [cursor, setCursor] = useState(null);
   const pts = positions(letters.length);
 
@@ -34,8 +37,9 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const begin = (event) => {
-    if (event.target.closest('.shuffle')) return;
+    if (event.target.closest('.wheel-bee')) return;
     ref.current.setPointerCapture(event.pointerId);
+    dragging.current = true;
     const p = locate(event);
     setCursor(p);
     const hit = hitTest(p);
@@ -43,7 +47,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const move = (event) => {
-    if (!ref.current.hasPointerCapture(event.pointerId)) return;
+    if (!dragging.current) return;
     const p = locate(event);
     setCursor(p);
     const hit = hitTest(p);
@@ -56,6 +60,8 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const end = (event) => {
+    if (!dragging.current) return;
+    dragging.current = false;
     if (ref.current.hasPointerCapture(event.pointerId)) {
       ref.current.releasePointerCapture(event.pointerId);
     }
@@ -78,12 +84,13 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
         onPointerCancel={end}
       >
         <div className="wheel-disc" />
+
         <svg className="wheel-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
           {selection.length > 0 && (
             <polyline
               points={line}
               fill="none"
-              stroke="var(--amber)"
+              stroke="var(--honey)"
               strokeWidth="0.022"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -95,7 +102,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
               y1={pts[selection[selection.length - 1]].y}
               x2={tail.x}
               y2={tail.y}
-              stroke="var(--amber)"
+              stroke="var(--honey)"
               strokeWidth="0.022"
               strokeLinecap="round"
               opacity="0.55"
@@ -108,10 +115,10 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
             key={i}
             className={selection.includes(i) ? 'letter on' : 'letter'}
             style={{
-              left: `${(pts[i].x - TILE / 2) * 100}%`,
-              top: `${(pts[i].y - TILE / 2) * 100}%`,
-              width: `${TILE * 100}%`,
-              height: `${TILE * 100}%`,
+              left:     `${(pts[i].x - TILE / 2) * 100}%`,
+              top:      `${(pts[i].y - TILE_H / 2) * 100}%`,
+              width:    `${TILE * 100}%`,
+              height:   `${TILE_H * 100}%`,
               fontSize: `calc(min(78vw, 300px) * ${TILE * 0.55})`
             }}
           >
@@ -119,14 +126,9 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
           </div>
         ))}
 
-        <button className="shuffle" onClick={onShuffle} aria-label="Shuffle letters">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M4 7h4l8 10h4" />
-            <path d="M4 17h4l3-4" />
-            <path d="M15 7h5" />
-            <path d="M18 4l3 3-3 3" />
-            <path d="M18 14l3 3-3 3" />
-          </svg>
+        {/* Center shuffle button */}
+        <button className="wheel-bee" onClick={onShuffle} aria-label="Shuffle letters">
+          <Icon name="shuffle" size="52%" color="var(--honey)" />
         </button>
       </div>
     </div>

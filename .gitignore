@@ -1,1 +1,12 @@
 node_modules
+dist/
+ios/
+android/
+.idea/
+
+# Vocabulary pipeline — raw source downloads (regeneratable)
+data/sources/
+
+# Pipeline output — committed when ready to ship
+# public/data/approved_common.txt
+# public/data/approved_valid.txt

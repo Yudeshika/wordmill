@@ -1,17 +1,15 @@
 import { mulberry32, counts, fitsIn, shuffled } from './util.js';
 import { packWords } from './pack.js';
 import { SHORT_WORDS } from './shortwords.js';
-import { BLOCKED } from './blocklist.js';
-import { isOffensive } from './offensive.js';
 
-// Frequency-rank cutoffs into the common list (which is ordered by frequency).
-// "Standard" keeps every word one you'd recognise. "Wide" reaches further down the
-// list and is deliberately reserved for the deep end of Hard — obscurity is the
-// lever that makes a puzzle feel unfair rather than difficult, so it arrives late.
-const STANDARD_BASE = 3500;
-const STANDARD_TARGET = 3500;
-const WIDE_BASE = 5500;
-const WIDE_TARGET = 6500;
+// Rank cutoffs into approved_common.txt, which is sorted by ESDB tier then alpha.
+// "Standard" keeps every word one you'd recognise (ESDB tier ≤ 35). "Wide" reaches
+// further and is reserved for the deep end of Hard — obscurity is the lever that
+// makes a puzzle feel unfair rather than difficult, so it arrives late.
+const STANDARD_BASE = 18807;
+const STANDARD_TARGET = 18807;
+const WIDE_BASE = 25541;
+const WIDE_TARGET = 30463;
 
 const band = (until, len, target, max, shorts, wide = false) => ({
   until,
@@ -28,35 +26,54 @@ export const MODES = {
   easy: {
     key: 'easy',
     name: 'Easy',
-    blurb: 'Short words, few of them. Nothing obscure, ever.',
+    blurb: 'Starts with 4-letter puzzles and gently grows. Familiar words only.',
     bands: [
-      band(15, [4, 4], 4, 5, 1),
-      band(40, [5, 5], 4, 6, 2),
-      band(Infinity, [5, 6], 5, 6, 2)
+      // Levels  1– 5: warm-up — 4-letter base, 3–4 words
+      band(5,        [4, 4], 3, 4, 1),
+      // Levels  6–20: comfortable — 4-letter base, 4–5 words
+      band(20,       [4, 4], 4, 5, 1),
+      // Levels 21–40: one new letter, word count stays the same
+      band(40,       [5, 5], 4, 5, 1),
+      // Levels 41–60: word count increases, letters stay at 5
+      band(60,       [5, 5], 5, 6, 2),
+      // Levels 61+:   slight stretch — 5–6 letter base
+      band(Infinity, [5, 6], 5, 6, 2),
     ]
   },
   normal: {
     key: 'normal',
     name: 'Normal',
-    blurb: 'Ramps from 4 letters to 7. Words stay familiar throughout.',
+    blurb: 'Steady climb from 4 to 7 letters. One variable changes at a time.',
     bands: [
-      band(8, [4, 4], 4, 5, 1),
-      band(20, [5, 5], 5, 6, 1),
-      band(40, [5, 6], 6, 7, 2),
-      band(70, [6, 6], 6, 8, 2),
-      band(Infinity, [6, 7], 7, 8, 2)
+      // Levels  1– 5: intro — 4-letter base, strict 4–5 words
+      band(5,        [4, 4], 4, 5, 1),
+      // Levels  6–15: transition — 4–5 letter base, same word count
+      band(15,       [4, 5], 4, 5, 1),
+      // Levels 16–30: settled at 5 — word count steps up
+      band(30,       [5, 5], 5, 6, 1),
+      // Levels 31–55: stretch — 5–6 letter base, more words
+      band(55,       [5, 6], 6, 7, 2),
+      // Levels 56–80: settled at 6 — word count steady
+      band(80,       [6, 6], 6, 7, 2),
+      // Levels 81+:   deep end — 6–7 letter base, full grids
+      band(Infinity, [6, 7], 7, 8, 2),
     ]
   },
   hard: {
     key: 'hard',
     name: 'Hard',
-    blurb: 'Starts at 5 letters and fills bigger grids. Past level 60 the word pool widens.',
+    blurb: 'No warm-up. Starts dense, reaches 7 letters, then the word pool widens.',
     bands: [
-      band(5, [5, 5], 5, 6, 1),
-      band(15, [6, 6], 6, 7, 1),
-      band(35, [6, 6], 7, 8, 2),
-      band(60, [6, 7], 7, 8, 2),
-      band(Infinity, [7, 7], 7, 8, 2, true)
+      // Levels  1–10: no warm-up — 5–6 letter base, dense grids
+      band(10,       [5, 6], 6, 7, 1),
+      // Levels 11–25: settled at 6 — maximum word count
+      band(25,       [6, 6], 7, 8, 2),
+      // Levels 26–50: consistent challenge — 6–7 letter base
+      band(50,       [6, 7], 7, 8, 2),
+      // Levels 51–75: max length — 7-letter base throughout
+      band(75,       [7, 7], 7, 8, 2),
+      // Levels 76+:   wide vocabulary — obscure words enter the pool
+      band(Infinity, [7, 7], 7, 8, 2, true),
     ]
   }
 };
@@ -79,6 +96,29 @@ function isPlural(word, set) {
   return false;
 }
 
+/**
+ * A word that is a detectable inflected form of another word in the set:
+ * gerund (-ing) or past tense/participle (-ed), with stemming rules for
+ * silent-e verbs (abating→abate) and doubled consonants (adding→add).
+ */
+function isInflection(word, set) {
+  if (word.length >= 6 && word.endsWith('ing')) {
+    const stem = word.slice(0, -3);
+    if (set.has(stem)) return true;
+    if (set.has(stem + 'e')) return true;
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] &&
+        set.has(stem.slice(0, -1))) return true;
+  }
+  if (word.length >= 5 && word.endsWith('ed')) {
+    const stem = word.slice(0, -2);
+    if (set.has(stem)) return true;
+    if (set.has(stem + 'e')) return true;
+    if (stem.length >= 2 && stem[stem.length - 1] === stem[stem.length - 2] &&
+        set.has(stem.slice(0, -1))) return true;
+  }
+  return false;
+}
+
 export function buildIndex(commonWords) {
   const set = new Set(commonWords);
   const entries = commonWords.map((word, rank) => ({
@@ -87,7 +127,7 @@ export function buildIndex(commonWords) {
     counts: counts(word),
     mask: maskOf(word),
     plural: isPlural(word, set),
-    blocked: BLOCKED.has(word) || isOffensive(word)
+    inflection: isInflection(word, set),
   }));
 
   const byLength = new Map();
@@ -104,7 +144,6 @@ function subWords(base, index, targetRank) {
   const out = [];
   for (const e of index.entries) {
     if (e.word.length > base.length || e.word === base) continue;
-    if (e.blocked) continue;
     if (e.rank > targetRank) continue;
     if (e.word.length === 3 && !SHORT_WORDS.has(e.word)) continue;
     if ((e.mask & ~baseMask) !== 0) continue; // cheap reject before the full count check
@@ -138,6 +177,7 @@ function chooseTargets(base, subs, band, rng) {
       if (picked.length >= limit) return;
       if (chosen.has(e.word)) continue;
       if (e.plural && !allowPlural) continue;
+      if (e.inflection) continue;
       if (conflicts(e.word)) continue;
       picked.push(e.word);
       chosen.add(e.word);
@@ -191,9 +231,9 @@ export function createPlanner(index, modeKey = 'normal') {
     const bySig = new Map();
     for (let len = band.len[0]; len <= band.len[1]; len++) {
       for (const e of index.byLength.get(len) || []) {
-        if (e.blocked) continue;
         if (e.rank > band.baseRank) continue;
         if (e.plural) continue; // never build a level around a plural
+        if (e.inflection) continue; // never build a level around a verb form
         if (new Set(e.word).size < e.word.length - 1) continue; // too many repeated letters
         const sig = signature(e.word);
         const held = bySig.get(sig);

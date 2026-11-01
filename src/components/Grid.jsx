@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-export default function Grid({ level, solved, revealed, justSolved }) {
+export default function Grid({ level, solved, revealed, justSolved, justHinted }) {
   const wrapRef = useRef(null);
   const [cell, setCell] = useState(34);
 
@@ -8,8 +8,11 @@ export default function Grid({ level, solved, revealed, justSolved }) {
     const el = wrapRef.current;
     if (!el) return;
     const measure = () => {
-      const w = el.clientWidth;
-      const h = el.clientHeight;
+      const style = getComputedStyle(el);
+      const padW = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+      const padH = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      const w = el.clientWidth - padW;
+      const h = el.clientHeight - padH;
       const byWidth = (w - (level.cols - 1) * 3) / level.cols;
       const byHeight = (h - (level.rows - 1) * 3) / level.rows;
       setCell(Math.max(20, Math.min(46, Math.floor(Math.min(byWidth, byHeight)))));
@@ -49,12 +52,13 @@ export default function Grid({ level, solved, revealed, justSolved }) {
         continue;
       }
       const isHinted = !entry.solved && entry.refs.some((ref) => revealed.includes(ref));
+      const isJustHinted = !entry.solved && entry.refs.some((ref) => ref === justHinted);
       const cls = entry.solved ? 'cell filled' : isHinted ? 'cell hinted' : 'cell blank';
       const animate = entry.solved && entry.order !== null;
       cells.push(
         <div
           key={key}
-          className={animate ? cls + ' pop' : cls}
+          className={animate ? cls + ' pop' : isJustHinted ? cls + ' hint-pop' : cls}
           style={animate ? { animationDelay: entry.order * 45 + 'ms' } : undefined}
         >
           {entry.solved || isHinted ? entry.letter.toUpperCase() : ''}

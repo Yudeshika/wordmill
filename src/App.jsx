@@ -1,79 +1,34 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Grid from './components/Grid.jsx';
 import WordRows from './components/WordRows.jsx';
 import Wheel from './components/Wheel.jsx';
+import Hud from './components/Hud.jsx';
+import SettingsSheet from './components/SettingsSheet.jsx';
+import WinOverlay from './components/WinOverlay.jsx';
+import FlyingCoins from './components/FlyingCoins.jsx';
+import CompletionSheet from './components/CompletionSheet.jsx';
+import HomeScreen from './components/HomeScreen.jsx';
+import HiveMap from './components/HiveMap.jsx';
+import { useProgress } from './hooks/useProgress.js';
+import { useGameLogic } from './hooks/useGameLogic.js';
+import { useCoinClaim } from './hooks/useCoinClaim.js';
 import { loadDictionary } from './game/dictionary.js';
-import { MODES, MODE_KEYS } from './game/generate.js';
-import { loadProgress, saveProgress, resetProgress } from './game/storage.js';
-
-const BOARDS = [
-  {
-    key: 'crossword',
-    name: 'Crossword',
-    blurb: 'Words interlock. Shared letters give you a way in.',
-    art: (
-      <svg viewBox="0 0 34 26" width="34" height="26" aria-hidden="true">
-        <g fill="currentColor">
-          <rect x="2" y="2" width="6" height="6" rx="1" />
-          <rect x="9" y="2" width="6" height="6" rx="1" />
-          <rect x="16" y="2" width="6" height="6" rx="1" />
-          <rect x="23" y="2" width="6" height="6" rx="1" />
-          <rect x="16" y="9" width="6" height="6" rx="1" />
-          <rect x="9" y="16" width="6" height="6" rx="1" />
-          <rect x="16" y="16" width="6" height="6" rx="1" />
-          <rect x="23" y="16" width="6" height="6" rx="1" />
-        </g>
-      </svg>
-    )
-  },
-  {
-    key: 'rows',
-    name: 'Word list',
-    blurb: 'One row per word. You only know how long each is.',
-    art: (
-      <svg viewBox="0 0 34 26" width="34" height="26" aria-hidden="true">
-        <g fill="currentColor">
-          <rect x="2" y="2" width="6" height="6" rx="1" />
-          <rect x="9" y="2" width="6" height="6" rx="1" />
-          <rect x="2" y="10" width="6" height="6" rx="1" />
-          <rect x="9" y="10" width="6" height="6" rx="1" />
-          <rect x="16" y="10" width="6" height="6" rx="1" />
-          <rect x="2" y="18" width="6" height="6" rx="1" />
-          <rect x="9" y="18" width="6" height="6" rx="1" />
-          <rect x="16" y="18" width="6" height="6" rx="1" />
-          <rect x="23" y="18" width="6" height="6" rx="1" />
-        </g>
-      </svg>
-    )
-  }
-];
-
-// Tile rendering is a look, not a player setting — flip this to compare, then
-// delete the loser. Board style (crossword vs word list) stays in settings because
-// it changes how the puzzle actually plays.
-const TILES_3D = true;
+import { MODES } from './game/generate.js';
+import { Icon } from './components/Icon.jsx';
 
 const HINT_COST = 15;
-const BONUS_REWARD = 5;
 
 export default function App() {
-  const [dict, setDict] = useState(null);
-  const [error, setError] = useState(null);
-  const [progress, setProgress] = useState(loadProgress);
+  const [dict, setDict]           = useState(null);
+  const [error, setError]         = useState(null);
   const [selection, setSelection] = useState([]);
-  const [rotation, setRotation] = useState(0);
-  const [flash, setFlash] = useState(null);
-  const [justSolved, setJustSolved] = useState(null);
-  const [revealed, setRevealed] = useState([]);
-  const [showBonus, setShowBonus] = useState(false);
+  const [rotation, setRotation]   = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [complete, setComplete] = useState(false);
-  const flashTimer = useRef(null);
+  const [toast, setToast]         = useState(null);
+  const [screen, setScreen]       = useState('home');
+  const toastTimer                = useRef(null);
 
-  useEffect(() => {
-    loadDictionary().then(setDict).catch((e) => setError(e.message));
-    return () => clearTimeout(flashTimer.current);
-  }, []);
+  const { progress, setProgress, switchMode, nextLevel, setBoard, startOver } = useProgress();
 
   const currentLevel = progress.levels[progress.mode];
 
@@ -82,13 +37,25 @@ export default function App() {
     return dict.plannerFor(progress.mode).get(currentLevel);
   }, [dict, progress.mode, currentLevel]);
 
-  useEffect(() => {
-    saveProgress(progress);
-  }, [progress]);
+  const {
+    flash, justSolved, justHinted, revealed,
+    complete, showWin,
+    submit, takeHint, resetLevel, onLetterSelect,
+    BONUS_REWARD,
+  } = useGameLogic({ dict, level, progress, setProgress });
+
+  const { coinClaim, flyingCoins, claimBtnRef, coinHudRef, claimCoins } = useCoinClaim({ progress, setProgress });
 
   useEffect(() => {
-    if (level && progress.solved.length === level.words.length) setComplete(true);
-  }, [level, progress.solved.length]);
+    loadDictionary().then(setDict).catch((e) => setError(e.message));
+    return () => clearTimeout(toastTimer.current);
+  }, []);
+
+  const showToast = (msg) => {
+    clearTimeout(toastTimer.current);
+    setToast(msg);
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
+  };
 
   const letters = useMemo(() => {
     if (!level) return [];
@@ -97,101 +64,36 @@ export default function App() {
     return [...level.letters.slice(offset), ...level.letters.slice(0, offset)];
   }, [level, rotation]);
 
-  const showFlash = useCallback((state) => {
-    clearTimeout(flashTimer.current);
-    setFlash(state);
-    flashTimer.current = setTimeout(() => setFlash(null), 700);
-  }, []);
-
-  const submit = useCallback(
-    (word) => {
-      if (!level || word.length < 3 || complete) {
-        if (word.length > 0 && word.length < 3) showFlash({ word, kind: 'wrong' });
-        return;
-      }
-      if (progress.solved.includes(word)) {
-        showFlash({ word, kind: 'seen' });
-        return;
-      }
-      if (level.words.includes(word)) {
-        setJustSolved(word);
-        setTimeout(() => setJustSolved(null), 700);
-        showFlash({ word, kind: 'correct' });
-        setProgress((p) => ({ ...p, solved: [...p.solved, word] }));
-        return;
-      }
-      if (dict.valid.has(word)) {
-        // Bonus words are collected once and stay collected for good — finding
-        // one again on a later level is acknowledged but not rewarded twice.
-        if (progress.bonus.includes(word)) {
-          showFlash({ word, kind: 'collected' });
-          return;
-        }
-        showFlash({ word, kind: 'bonus' });
-        setProgress((p) => ({
-          ...p,
-          coins: p.coins + BONUS_REWARD,
-          bonus: [...p.bonus, word],
-          bonusLevel: [...p.bonusLevel, word]
-        }));
-        return;
-      }
-      showFlash({ word, kind: 'wrong' });
-    },
-    [level, progress.solved, progress.bonus, dict, complete, showFlash]
-  );
-
-  const takeHint = () => {
-    if (!level || progress.coins < HINT_COST) return;
-    const options = [];
-    for (const word of level.words) {
-      if (progress.solved.includes(word)) continue;
-      for (let i = 0; i < word.length; i++) {
-        const key = word + ':' + i;
-        if (!revealed.includes(key)) options.push(key);
-      }
-    }
-    if (!options.length) return;
-    const pick = options[Math.floor(Math.random() * options.length)];
-    setRevealed((r) => [...r, pick]);
-    setProgress((p) => ({ ...p, coins: p.coins - HINT_COST }));
-  };
-
-  const nextLevel = () => {
-    setComplete(false);
-    setRevealed([]);
+  const handleNextLevel = () => {
+    nextLevel();
+    resetLevel();
     setSelection([]);
     setRotation(0);
-    setProgress((p) => ({
-      ...p,
-      levels: { ...p.levels, [p.mode]: p.levels[p.mode] + 1 },
-      coins: p.coins + 10,
-      solved: [],
-      bonusLevel: []
-    }));
   };
 
-  const setBoard = (board) => {
-    setProgress((p) => ({ ...p, board }));
-  };
-
-  const switchMode = (mode) => {
+  const handleSwitchMode = (mode) => {
     setShowSettings(false);
-    if (mode === progress.mode) return;
-    setComplete(false);
-    setRevealed([]);
+    switchMode(mode);
+    resetLevel();
     setSelection([]);
     setRotation(0);
-    // Each mode keeps its own level, so this resumes rather than restarts.
-    setProgress((p) => ({ ...p, mode, solved: [], bonusLevel: [] }));
   };
 
-  const startOver = () => {
-    setComplete(false);
-    setRevealed([]);
-    setSelection([]);
-    setProgress(resetProgress());
+  const handleSetBoard = (board) => {
+    setBoard(board);
+    setShowSettings(false);
+    if (board === 'rows') showToast('Shortest words first, A – Z within each length');
   };
+
+  const handleStartOver = () => {
+    startOver();
+    resetLevel();
+    setSelection([]);
+    setRotation(0);
+    setShowSettings(false);
+  };
+
+  const handleShuffle = () => setRotation((r) => r + 1);
 
   if (error) {
     return (
@@ -205,22 +107,72 @@ export default function App() {
   if (!dict) {
     return (
       <div className="centered">
-        <p className="hud-label">Word Connect</p>
+        <p className="sheet-title" style={{ color: 'var(--ink)' }}>Word Hive</p>
         <p className="sheet-body">Setting up the puzzle…</p>
       </div>
     );
   }
 
+  // Home screen
+  if (screen === 'home') {
+    return (
+      <>
+        <HomeScreen
+          currentLevel={currentLevel}
+          modeName={MODES[progress.mode].name}
+          onPlay={() => setScreen('play')}
+          onHiveMap={() => setScreen('hivemap')}
+          onSettings={() => setShowSettings(true)}
+        />
+        {showSettings && (
+          <SettingsSheet
+            progress={progress}
+            setProgress={setProgress}
+            onClose={() => setShowSettings(false)}
+            onSetBoard={handleSetBoard}
+            onSwitchMode={handleSwitchMode}
+            onStartOver={handleStartOver}
+            coins={progress.coins}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Hive map screen
+  if (screen === 'hivemap') {
+    return (
+      <>
+        <HiveMap
+          progress={progress}
+          onBack={() => setScreen('home')}
+          onPlay={() => setScreen('play')}
+        />
+        {showSettings && (
+          <SettingsSheet
+            progress={progress}
+            setProgress={setProgress}
+            onClose={() => setShowSettings(false)}
+            onSetBoard={handleSetBoard}
+            onSwitchMode={handleSwitchMode}
+            onStartOver={handleStartOver}
+            coins={progress.coins}
+          />
+        )}
+      </>
+    );
+  }
+
+  // No level available
   if (!level) {
     return (
       <div className="centered">
         <p className="sheet-title">That's every level</p>
         <p className="sheet-body">
           You've cleared all {currentLevel - 1} on {MODES[progress.mode].name} and collected{' '}
-          {progress.bonus.length} bonus words. Try another difficulty, or reset to play through
-          again.
+          {progress.bonus.length} bonus words. Try another difficulty, or reset to play through again.
         </p>
-        <button className="btn-primary" onClick={startOver}>
+        <button className="btn-primary" onClick={handleStartOver}>
           Start over
         </button>
       </div>
@@ -228,9 +180,6 @@ export default function App() {
   }
 
   const previewWord = flash ? flash.word : selection.map((i) => letters[i]).join('');
-  const previewClass =
-    'preview' +
-    (flash ? ' ' + (flash.kind === 'seen' || flash.kind === 'collected' ? 'wrong' : flash.kind) : '');
   const note =
     flash && flash.kind === 'bonus'
       ? `new bonus word · +${BONUS_REWARD}`
@@ -239,178 +188,125 @@ export default function App() {
         : flash && flash.kind === 'seen'
           ? 'already found'
           : null;
+  const previewClass =
+    'preview' +
+    (!previewWord && !note ? ' idle' : '') +
+    (flash ? ' ' + (flash.kind === 'seen' || flash.kind === 'collected' ? 'wrong' : flash.kind) : '');
 
   return (
-    <div className={TILES_3D ? 'app tiles-3d' : 'app'}>
-      <div className="hud">
-        <div>
-          <div className="hud-label">{MODES[progress.mode].name}</div>
-          <div className="hud-value">{currentLevel}</div>
-        </div>
-        <div className="hud-center">
-          <div className="hud-label">Words</div>
-          <div className="hud-value">
-            {progress.solved.length} / {level.words.length}
-          </div>
-        </div>
-        <div className="hud-right">
-          <div className="coins">
-            <span className="coin-dot" />
-            {progress.coins}
-          </div>
-          <button className="gear" onClick={() => setShowSettings(true)} aria-label="Settings">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {progress.board === 'rows' ? (
-        <WordRows
-          level={level}
-          solved={progress.solved}
-          revealed={revealed}
-          justSolved={justSolved}
-        />
-      ) : (
-        <Grid level={level} solved={progress.solved} revealed={revealed} justSolved={justSolved} />
-      )}
-
-      <div className={previewClass}>
-        {note ? (
-          <span className={'preview-note' + (flash.kind === 'bonus' ? ' gain' : '')}>{note}</span>
-        ) : (
-          previewWord.split('').map((ch, i) => (
-            <span className="preview-tile" key={i}>
-              {ch.toUpperCase()}
-            </span>
-          ))
-        )}
-      </div>
-
-      <Wheel
-        letters={letters}
-        selection={selection}
-        onChange={setSelection}
-        onSubmit={submit}
-        onShuffle={() => setRotation((r) => r + 1)}
+    <div className="app">
+      <Hud
+        modeName={MODES[progress.mode].name}
+        currentLevel={currentLevel}
+        solved={progress.solved.length}
+        totalWords={level.words.length}
+        coins={progress.coins}
+        coinClaim={coinClaim}
+        coinHudRef={coinHudRef}
+        onSettings={() => setShowSettings(true)}
+        onBack={() => setScreen('home')}
       />
 
-      <div className="actions">
+      <main className="play-area">
+        <div className="board-frame">
+          {progress.board === 'rows' ? (
+            <WordRows
+              level={level}
+              solved={progress.solved}
+              revealed={revealed}
+              justSolved={justSolved}
+              justHinted={justHinted}
+            />
+          ) : (
+            <Grid
+              level={level}
+              solved={progress.solved}
+              revealed={revealed}
+              justSolved={justSolved}
+              justHinted={justHinted}
+            />
+          )}
+        </div>
+
+        <div className={previewClass} aria-live="polite">
+          {note ? (
+            <span className={'preview-note' + (flash.kind === 'bonus' ? ' gain' : '')}>{note}</span>
+          ) : previewWord ? (
+            previewWord.split('').map((ch, i) => (
+              <span className="preview-letter" key={i}>{ch.toUpperCase()}</span>
+            ))
+          ) : (
+            <span className="preview-placeholder">Build a word</span>
+          )}
+        </div>
+
+        <Wheel
+          letters={letters}
+          selection={selection}
+          onChange={(sel) => {
+            if (sel.length > selection.length) onLetterSelect();
+            setSelection(sel);
+          }}
+          onSubmit={submit}
+          onShuffle={handleShuffle}
+        />
+      </main>
+
+      <footer className="actions">
         <button className="btn" onClick={takeHint} disabled={progress.coins < HINT_COST}>
-          Hint <span className="cost">{HINT_COST}</span>
+          <Icon name="hint" size={36} color="var(--ink)" accent="var(--honey)" />
+          <div className="btn-text">
+            <span>Hint</span>
+            <span className="cost">{HINT_COST}</span>
+          </div>
         </button>
-        <button className="btn" onClick={() => setShowBonus(true)}>
-          Bonus <span className="cost">{progress.bonus.length}</span>
+
+        <button
+          ref={claimBtnRef}
+          className={'btn' + (progress.unclaimedCoins > 0 ? ' has-unclaimed' : '')}
+          disabled={progress.unclaimedCoins === 0}
+          onClick={claimCoins}
+        >
+          <Icon name="bonus-jar" size={36} color="var(--ink)" accent="var(--honey)" />
+          <div className="btn-text">
+            <span>Claim</span>
+            {progress.unclaimedCoins > 0 && (
+              <span className="cost">+{progress.unclaimedCoins}</span>
+            )}
+          </div>
         </button>
-      </div>
+      </footer>
 
       {showSettings && (
-        <div className="sheet" onClick={() => setShowSettings(false)}>
-          <div className="sheet-card scrollable" onClick={(e) => e.stopPropagation()}>
-            <h2 className="sheet-title">Settings</h2>
-
-            <div>
-              <p className="hud-label">Board</p>
-              <div className="boards">
-                {BOARDS.map((b) => (
-                  <button
-                    key={b.key}
-                    className={'board-option' + (progress.board === b.key ? ' on' : '')}
-                    onClick={() => setBoard(b.key)}
-                  >
-                    <span className="board-art" aria-hidden="true">
-                      {b.art}
-                    </span>
-                    <span className="board-name">{b.name}</span>
-                    <span className="board-blurb">{b.blurb}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <p className="hud-label">Difficulty</p>
-            <p className="sheet-body">
-              Each difficulty keeps its own level, so you can switch and come back without
-              losing your place. Your bonus word collection is shared.
-            </p>
-            <div className="modes">
-              {MODE_KEYS.map((key) => (
-                <button
-                  key={key}
-                  className={'mode' + (key === progress.mode ? ' on' : '')}
-                  onClick={() => switchMode(key)}
-                >
-                  <span className="mode-head">
-                    <span className="mode-name">{MODES[key].name}</span>
-                    <span className="mode-level">level {progress.levels[key]}</span>
-                  </span>
-                  <span className="mode-blurb">{MODES[key].blurb}</span>
-                </button>
-              ))}
-            </div>
-            <button className="link" onClick={startOver}>
-              Reset all progress
-            </button>
-          </div>
-        </div>
+        <SettingsSheet
+          progress={progress}
+          setProgress={setProgress}
+          onClose={() => setShowSettings(false)}
+          onSetBoard={handleSetBoard}
+          onSwitchMode={handleSwitchMode}
+          onStartOver={handleStartOver}
+        />
       )}
 
-      {showBonus && (
-        <div className="sheet" onClick={() => setShowBonus(false)}>
-          <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
-            <h2 className="sheet-title">Collection</h2>
-            <p className="sheet-body">
-              Real words you found that weren't in the grid. Once collected, a word stays
-              collected — {progress.bonus.length} so far.
-            </p>
-            {progress.bonusLevel.length > 0 && (
-              <div>
-                <p className="hud-label">New on this level</p>
-                <div className="chips">
-                  {progress.bonusLevel.map((w) => (
-                    <span className="chip new" key={w}>
-                      {w}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {progress.bonus.length > 0 ? (
-              <div className="chips scroll">
-                {progress.bonus.map((w) => (
-                  <span className="chip" key={w}>
-                    {w}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="sheet-body">Nothing collected yet.</p>
-            )}
-            <button className="btn-primary" onClick={() => setShowBonus(false)}>
-              Back to puzzle
-            </button>
-          </div>
-        </div>
-      )}
+      <FlyingCoins coins={flyingCoins} />
+      <WinOverlay visible={showWin} />
+
+      {toast && <div className="toast" role="status">{toast}</div>}
 
       {complete && (
-        <div className="sheet">
-          <div className="sheet-card">
-            <h2 className="sheet-title">Level {currentLevel} done</h2>
-            <p className="sheet-body">
-              {level.words.length} words found
-              {progress.bonusLevel.length > 0
-                ? `, plus ${progress.bonusLevel.length} new for the collection`
-                : ''}. Take 10 coins.
-            </p>
-            <button className="btn-primary" onClick={nextLevel}>
-              Next level
-            </button>
-          </div>
-        </div>
+        <CompletionSheet
+          currentLevel={currentLevel}
+          modeName={MODES[progress.mode].name}
+          wordCount={level.words.length}
+          bonusWordCount={progress.bonusLevel.length}
+          solved={progress.solved}
+          bonusWords={progress.bonusLevel}
+          onNext={handleNextLevel}
+          onHiveMap={() => {
+            handleNextLevel();
+            setScreen('hivemap');
+          }}
+        />
       )}
     </div>
   );

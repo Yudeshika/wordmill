@@ -1,0 +1,53 @@
+{
+  "allow": [],
+
+  "deny": [
+    "gook",
+    "chink",
+    "wop",
+    "dyke",
+    "retard",
+    "spastic",
+    "coon",
+    "spic",
+    "wetback",
+    "kike",
+    "heeb",
+    "paki",
+    "polack",
+    "nigger",
+    "nigga",
+    "faggot",
+    "tranny",
+    "shemale",
+    "rapist",
+    "cunt",
+    "motherfucker",
+    "jizz",
+    "dildo",
+    "molest",
+    "incest",
+    "paedo",
+    "pedo",
+    "smut",
+    "hentai",
+    "sodomy",
+    "buggery",
+    "bestiality",
+    "buttplug",
+    "vibrator",
+    "nbsp",
+    "amp",
+    "quot",
+    "gmt",
+    "utc",
+    "rss",
+    "xhtml"
+  ],
+
+  "_notes": {
+    "slurs_with_innocent_senses": "Several of these (chink, dyke, retard, gook, wop) are real dictionary words with non-offensive primary senses that ESDB includes. LDNOOBW does not flag them. They are denied here explicitly. The validate.js MUST_NOT_CONTAIN list reads from this deny array so that validation and filtering always agree.",
+    "ldnoobw_gaps": "LDNOOBW's English list covers ~400 roots. It misses many slurs that have plausible innocent dictionary senses. This deny list covers the gaps.",
+    "allow_rationale": "Use allow only when a word is incorrectly excluded by automated filtering and is clearly appropriate for a family word game."
+  }
+}
