@@ -7,16 +7,15 @@ import SettingsSheet from './components/SettingsSheet.jsx';
 import WinOverlay from './components/WinOverlay.jsx';
 import FlyingCoins from './components/FlyingCoins.jsx';
 import CompletionSheet from './components/CompletionSheet.jsx';
+import HomeScreen from './components/HomeScreen.jsx';
+import HiveMap from './components/HiveMap.jsx';
 import { useProgress } from './hooks/useProgress.js';
 import { useGameLogic } from './hooks/useGameLogic.js';
 import { useCoinClaim } from './hooks/useCoinClaim.js';
 import { loadDictionary } from './game/dictionary.js';
 import { MODES } from './game/generate.js';
-import beeCornerImg from './assets/images/bee-corner.png';
-import hintBadgeImg from './assets/images/hint-badge.png';
-import bonusBadgeImg from './assets/images/bonus-badge.png';
+import { Icon } from './components/Icon.jsx';
 
-const TILES_3D = true;
 const HINT_COST = 15;
 
 export default function App() {
@@ -26,6 +25,7 @@ export default function App() {
   const [rotation, setRotation]   = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [toast, setToast]         = useState(null);
+  const [screen, setScreen]       = useState('home');
   const toastTimer                = useRef(null);
 
   const { progress, setProgress, switchMode, nextLevel, setBoard, startOver } = useProgress();
@@ -93,6 +93,8 @@ export default function App() {
     setShowSettings(false);
   };
 
+  const handleShuffle = () => setRotation((r) => r + 1);
+
   if (error) {
     return (
       <div className="centered">
@@ -105,12 +107,63 @@ export default function App() {
   if (!dict) {
     return (
       <div className="centered">
-        <p className="hud-label">Word Connect</p>
+        <p className="sheet-title" style={{ color: 'var(--ink)' }}>Word Hive</p>
         <p className="sheet-body">Setting up the puzzle…</p>
       </div>
     );
   }
 
+  // Home screen
+  if (screen === 'home') {
+    return (
+      <>
+        <HomeScreen
+          currentLevel={currentLevel}
+          modeName={MODES[progress.mode].name}
+          onPlay={() => setScreen('play')}
+          onHiveMap={() => setScreen('hivemap')}
+          onSettings={() => setShowSettings(true)}
+        />
+        {showSettings && (
+          <SettingsSheet
+            progress={progress}
+            setProgress={setProgress}
+            onClose={() => setShowSettings(false)}
+            onSetBoard={handleSetBoard}
+            onSwitchMode={handleSwitchMode}
+            onStartOver={handleStartOver}
+            coins={progress.coins}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Hive map screen
+  if (screen === 'hivemap') {
+    return (
+      <>
+        <HiveMap
+          progress={progress}
+          onBack={() => setScreen('home')}
+          onPlay={() => setScreen('play')}
+        />
+        {showSettings && (
+          <SettingsSheet
+            progress={progress}
+            setProgress={setProgress}
+            onClose={() => setShowSettings(false)}
+            onSetBoard={handleSetBoard}
+            onSwitchMode={handleSwitchMode}
+            onStartOver={handleStartOver}
+            coins={progress.coins}
+          />
+        )}
+      </>
+    );
+  }
+
+  // No level available
   if (!level) {
     return (
       <div className="centered">
@@ -141,7 +194,7 @@ export default function App() {
     (flash ? ' ' + (flash.kind === 'seen' || flash.kind === 'collected' ? 'wrong' : flash.kind) : '');
 
   return (
-    <div className={TILES_3D ? 'app tiles-3d' : 'app'}>
+    <div className="app">
       <Hud
         modeName={MODES[progress.mode].name}
         currentLevel={currentLevel}
@@ -151,12 +204,11 @@ export default function App() {
         coinClaim={coinClaim}
         coinHudRef={coinHudRef}
         onSettings={() => setShowSettings(true)}
+        onBack={() => setScreen('home')}
       />
 
       <main className="play-area">
         <div className="board-frame">
-          <img src={beeCornerImg} className="bee-corner bee-corner--tl" aria-hidden="true" alt="" />
-          <img src={beeCornerImg} className="bee-corner bee-corner--br" aria-hidden="true" alt="" />
           {progress.board === 'rows' ? (
             <WordRows
               level={level}
@@ -196,27 +248,32 @@ export default function App() {
             setSelection(sel);
           }}
           onSubmit={submit}
-          onShuffle={() => setRotation((r) => r + 1)}
+          onShuffle={handleShuffle}
         />
       </main>
 
       <footer className="actions">
         <button className="btn" onClick={takeHint} disabled={progress.coins < HINT_COST}>
-          <img src={hintBadgeImg} className="action-badge" aria-hidden="true" alt="" />
-          <span>Hint</span>
-          <span className="cost">{HINT_COST}</span>
+          <Icon name="hint" size={36} color="var(--ink)" accent="var(--honey)" />
+          <div className="btn-text">
+            <span>Hint</span>
+            <span className="cost">{HINT_COST}</span>
+          </div>
         </button>
+
         <button
           ref={claimBtnRef}
           className={'btn' + (progress.unclaimedCoins > 0 ? ' has-unclaimed' : '')}
           disabled={progress.unclaimedCoins === 0}
           onClick={claimCoins}
         >
-          <img src={bonusBadgeImg} className="action-badge" aria-hidden="true" alt="" />
-          <span>Claim coins</span>
-          {progress.unclaimedCoins > 0 && (
-            <span className="cost">+{progress.unclaimedCoins}</span>
-          )}
+          <Icon name="bonus-jar" size={36} color="var(--ink)" accent="var(--honey)" />
+          <div className="btn-text">
+            <span>Claim</span>
+            {progress.unclaimedCoins > 0 && (
+              <span className="cost">+{progress.unclaimedCoins}</span>
+            )}
+          </div>
         </button>
       </footer>
 
@@ -239,9 +296,16 @@ export default function App() {
       {complete && (
         <CompletionSheet
           currentLevel={currentLevel}
+          modeName={MODES[progress.mode].name}
           wordCount={level.words.length}
           bonusWordCount={progress.bonusLevel.length}
+          solved={progress.solved}
+          bonusWords={progress.bonusLevel}
           onNext={handleNextLevel}
+          onHiveMap={() => {
+            handleNextLevel();
+            setScreen('hivemap');
+          }}
         />
       )}
     </div>
