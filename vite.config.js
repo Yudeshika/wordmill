@@ -8,17 +8,17 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon-192.png', 'icon-512.png', 'icon-maskable.png'],
+      includeAssets: ['apple-touch-icon.png', 'favicon.svg', 'favicon-32.png', 'favicon-16.png', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'],
       manifest: {
-        name: 'Word Connect',
-        short_name: 'Connect',
-        description: 'A quiet word connect puzzle. No ads, no timers.',
+        name: 'Word Hive',
+        short_name: 'Word Hive',
+        description: 'A quiet word puzzle. No ads, no accounts.',
         start_url: './',
         scope: './',
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#131a2b',
-        theme_color: '#131a2b',
+        background_color: '#FFC93C',
+        theme_color: '#FFC93C',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },

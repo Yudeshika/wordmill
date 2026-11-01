@@ -2,6 +2,7 @@ node_modules
 dist/
 ios/
 android/
+.idea/
 
 # Vocabulary pipeline — raw source downloads (regeneratable)
 data/sources/

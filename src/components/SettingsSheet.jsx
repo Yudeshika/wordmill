@@ -1,117 +1,137 @@
 import { MODES, MODE_KEYS } from '../game/generate.js';
-import { CloseIcon, SoundIcon, MuteIcon, VibrateIcon } from '../assets/icons/index.js';
+import { Icon } from './Icon.jsx';
 
-const BOARDS = [
-  {
-    key: 'crossword',
-    name: 'Crossword',
-    art: (
-      <svg viewBox="0 0 34 26" width="34" height="26" aria-hidden="true">
-        <g fill="currentColor">
-          <rect x="2" y="2" width="6" height="6" rx="1" />
-          <rect x="9" y="2" width="6" height="6" rx="1" />
-          <rect x="16" y="2" width="6" height="6" rx="1" />
-          <rect x="23" y="2" width="6" height="6" rx="1" />
-          <rect x="16" y="9" width="6" height="6" rx="1" />
-          <rect x="9" y="16" width="6" height="6" rx="1" />
-          <rect x="16" y="16" width="6" height="6" rx="1" />
-          <rect x="23" y="16" width="6" height="6" rx="1" />
-        </g>
-      </svg>
-    )
-  },
-  {
-    key: 'rows',
-    name: 'Word list',
-    art: (
-      <svg viewBox="0 0 34 26" width="34" height="26" aria-hidden="true">
-        <g fill="currentColor">
-          <rect x="2" y="2" width="6" height="6" rx="1" />
-          <rect x="9" y="2" width="6" height="6" rx="1" />
-          <rect x="2" y="10" width="6" height="6" rx="1" />
-          <rect x="9" y="10" width="6" height="6" rx="1" />
-          <rect x="16" y="10" width="6" height="6" rx="1" />
-          <rect x="2" y="18" width="6" height="6" rx="1" />
-          <rect x="9" y="18" width="6" height="6" rx="1" />
-          <rect x="16" y="18" width="6" height="6" rx="1" />
-          <rect x="23" y="18" width="6" height="6" rx="1" />
-        </g>
-      </svg>
-    )
-  }
-];
+function ToggleRow({ iconName, label, sub, checked, onChange }) {
+  return (
+    <label className="toggle-row">
+      <span className="toggle-row-label">
+        {iconName && <Icon name={iconName} size={20} color="var(--ink)" accent="var(--honey)" style={{ marginBottom: 2 }} />}
+        <span className="toggle-row-text">{label}</span>
+        {sub && <span className="toggle-row-sub">{sub}</span>}
+      </span>
+      <span className="toggle-switch">
+        <input type="checkbox" checked={checked} onChange={onChange} aria-label={label} />
+        <span className="toggle-track" />
+        <span className="toggle-thumb" />
+      </span>
+    </label>
+  );
+}
 
 export default function SettingsSheet({ progress, setProgress, onClose, onSetBoard, onSwitchMode, onStartOver }) {
+  // const [theme, setTheme]           = useState('system');
+  // const [letterSize, setLetterSize] = useState('normal');
+  // const [music, setMusic]           = useState(false);
+  // const [reduceMotion, setReduceMotion] = useState(false);
+
   return (
-    <div className="sheet" onClick={onClose}>
-      <div className="sheet-card scrollable" onClick={(e) => e.stopPropagation()}>
-        <div className="sheet-header">
-          <h2 className="sheet-title">Settings</h2>
-          <button className="sheet-close" onClick={onClose} aria-label="Close settings">
-            <CloseIcon size={20} />
-          </button>
+    <div className="settings-page">
+      {/* Header */}
+      <div className="settings-header">
+        <button className="settings-back-circle" onClick={onClose} aria-label="Back">
+          <Icon name="back" size={18} color="var(--ink)" />
+        </button>
+        <span className="settings-title">Settings</span>
+      </div>
+
+      <div className="settings-body">
+
+        {/* Sound & Haptics card */}
+        <div className="settings-section">
+          <ToggleRow
+            iconName="sound"
+            label="Sound effects"
+            sub="Taps, chimes and coins"
+            checked={!!progress.sound}
+            onChange={() => setProgress((p) => ({ ...p, sound: !p.sound }))}
+          />
+          {/* Music — not yet implemented */}
+          {/* <div className="toggle-divider" />
+          <ToggleRow
+            iconName="music"
+            label="Music"
+            sub="Gentle background loop"
+            checked={music}
+            onChange={() => setMusic((v) => !v)}
+          /> */}
+          <div className="toggle-divider" />
+          <ToggleRow
+            iconName="vibration"
+            label="Vibration"
+            sub="Android phones only"
+            checked={!!progress.vibrate}
+            onChange={() => setProgress((p) => ({ ...p, vibrate: !p.vibrate }))}
+          />
+          {/* Reduce motion — not yet implemented */}
+          {/* <div className="toggle-divider" />
+          <ToggleRow
+            iconName="motion"
+            label="Reduce motion"
+            sub="Fades instead of flying"
+            checked={reduceMotion}
+            onChange={() => setReduceMotion((v) => !v)}
+          /> */}
         </div>
 
-        <div>
-          <p className="hud-label">Board</p>
-          <div className="boards">
-            {BOARDS.map((b) => (
+        {/* Theme + Letter size — not yet implemented */}
+        {/* <div className="settings-section">
+          ...
+        </div> */}
+
+        {/* Board */}
+        <div className="settings-section">
+          <p className="settings-section-label">Board</p>
+          <div className="segment segment--pill">
+            <button
+              className={'segment-btn' + (progress.board === 'crossword' ? ' on' : '')}
+              onClick={() => onSetBoard('crossword')}
+            >
+              Crossword
+            </button>
+            <button
+              className={'segment-btn' + (progress.board === 'rows' ? ' on' : '')}
+              onClick={() => onSetBoard('rows')}
+            >
+              Word list
+            </button>
+          </div>
+        </div>
+
+        {/* Difficulty */}
+        <div className="settings-section">
+          <p className="settings-section-label">Difficulty</p>
+          <div className="segment">
+            {MODE_KEYS.map((key) => (
               <button
-                key={b.key}
-                className={'board-option' + (progress.board === b.key ? ' on' : '')}
-                onClick={() => onSetBoard(b.key)}
+                key={key}
+                className={'segment-btn' + (key === progress.mode ? ' on' : '')}
+                onClick={() => onSwitchMode(key)}
               >
-                <span className="board-art" aria-hidden="true">{b.art}</span>
-                <span className="board-name">{b.name}</span>
-                <span className="board-blurb">{b.blurb}</span>
+                {MODES[key].name}
               </button>
             ))}
           </div>
         </div>
 
-        <p className="hud-label">Difficulty</p>
-        <p className="sheet-body">
-          Each difficulty keeps its own level, so you can switch and come back without losing your place.
+        {/* Reset card */}
+        <div className="settings-section">
+          <button
+            className="settings-item settings-danger-row"
+            onClick={() => {
+              if (window.confirm('Reset all progress? This cannot be undone.')) {
+                onStartOver();
+              }
+            }}
+          >
+            <Icon name="reset" size={18} color="var(--danger)" style={{ marginRight: 8 }} />
+            Reset progress
+          </button>
+        </div>
+
+        <p className="settings-footer">
+          Word Hive · no ads, no accounts, your progress stays on this device
         </p>
-        <div className="modes">
-          {MODE_KEYS.map((key) => (
-            <button
-              key={key}
-              className={'mode' + (key === progress.mode ? ' on' : '')}
-              onClick={() => onSwitchMode(key)}
-            >
-              <span className="mode-head">
-                <span className="mode-name">{MODES[key].name}</span>
-                <span className="mode-level">level {progress.levels[key]}</span>
-              </span>
-              <span className="mode-blurb">{MODES[key].blurb}</span>
-            </button>
-          ))}
-        </div>
 
-        <p className="hud-label">Audio &amp; Haptics</p>
-        <div className="toggles">
-          <button
-            className={'toggle' + (progress.sound ? ' on' : '')}
-            onClick={() => setProgress((p) => ({ ...p, sound: !p.sound }))}
-            aria-pressed={progress.sound}
-          >
-            {progress.sound ? <SoundIcon size={18} /> : <MuteIcon size={18} />}
-            <span>{progress.sound ? 'Sound on' : 'Sound off'}</span>
-          </button>
-          <button
-            className={'toggle' + (progress.vibrate ? ' on' : '')}
-            onClick={() => setProgress((p) => ({ ...p, vibrate: !p.vibrate }))}
-            aria-pressed={progress.vibrate}
-          >
-            <VibrateIcon size={18} />
-            <span>{progress.vibrate ? 'Vibrate on' : 'Vibrate off'}</span>
-          </button>
-        </div>
-
-        <button className="link" onClick={onStartOver}>
-          Reset all progress
-        </button>
       </div>
     </div>
   );

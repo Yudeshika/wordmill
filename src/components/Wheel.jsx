@@ -1,8 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
-import { ShuffleIcon } from '../assets/icons/index.js';
+import { Icon } from './Icon.jsx';
 
 const RING = 0.345;
 const TILE = 0.2;
+const TILE_H = TILE * Math.sqrt(3) / 2; // flat-top hex: height = width × (√3/2)
 const HIT = 0.115;
 
 function positions(count) {
@@ -36,7 +37,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const begin = (event) => {
-    if (event.target.closest('.shuffle')) return;
+    if (event.target.closest('.wheel-bee')) return;
     ref.current.setPointerCapture(event.pointerId);
     dragging.current = true;
     const p = locate(event);
@@ -59,7 +60,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
   };
 
   const end = (event) => {
-    if (!dragging.current) return; // pointerup and pointercancel can both fire; only handle once
+    if (!dragging.current) return;
     dragging.current = false;
     if (ref.current.hasPointerCapture(event.pointerId)) {
       ref.current.releasePointerCapture(event.pointerId);
@@ -83,6 +84,7 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
         onPointerCancel={end}
       >
         <div className="wheel-disc" />
+
         <svg className="wheel-svg" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
           {selection.length > 0 && (
             <polyline
@@ -113,10 +115,10 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
             key={i}
             className={selection.includes(i) ? 'letter on' : 'letter'}
             style={{
-              left: `${(pts[i].x - TILE / 2) * 100}%`,
-              top: `${(pts[i].y - TILE / 2) * 100}%`,
-              width: `${TILE * 100}%`,
-              height: `${TILE * 100}%`,
+              left:     `${(pts[i].x - TILE / 2) * 100}%`,
+              top:      `${(pts[i].y - TILE_H / 2) * 100}%`,
+              width:    `${TILE * 100}%`,
+              height:   `${TILE_H * 100}%`,
               fontSize: `calc(min(78vw, 300px) * ${TILE * 0.55})`
             }}
           >
@@ -124,8 +126,9 @@ export default function Wheel({ letters, selection, onChange, onSubmit, onShuffl
           </div>
         ))}
 
-        <button className="shuffle" onClick={onShuffle} aria-label="Shuffle letters">
-          <ShuffleIcon />
+        {/* Center shuffle button */}
+        <button className="wheel-bee" onClick={onShuffle} aria-label="Shuffle letters">
+          <Icon name="shuffle" size="52%" color="var(--honey)" />
         </button>
       </div>
     </div>
