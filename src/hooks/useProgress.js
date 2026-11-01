@@ -26,9 +26,22 @@ export function useProgress() {
     setProgress((p) => ({ ...p, board }));
   };
 
+  // Mark a level as done (value=1) or perfect/no-hints (value=2). Never downgrades.
+  const markCrown = (level, mode, perfect) => {
+    const value = perfect ? 2 : 1;
+    setProgress((p) => {
+      const existing = (p.crowns[mode] || {})[level] || 0;
+      if (existing >= value) return p;
+      return {
+        ...p,
+        crowns: { ...p.crowns, [mode]: { ...p.crowns[mode], [level]: value } }
+      };
+    });
+  };
+
   const startOver = () => {
     setProgress(resetProgress());
   };
 
-  return { progress, setProgress, switchMode, nextLevel, setBoard, startOver };
+  return { progress, setProgress, switchMode, nextLevel, setBoard, markCrown, startOver };
 }

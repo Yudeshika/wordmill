@@ -1,4 +1,4 @@
-import coinImg from '../assets/images/coin.png';
+import coinImg from '../assets/images/wordhive-mark.png';
 
 export default function WinOverlay({ visible }) {
   if (!visible) return null;

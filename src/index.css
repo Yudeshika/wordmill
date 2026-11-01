@@ -939,38 +939,91 @@ button:focus-visible { outline: 3px solid rgba(255,201,60,.6); outline-offset: 3
   z-index: 5;
 }
 
+/* Mode switcher */
+.hivemap-mode-switch {
+  display: flex;
+  gap: 4px;
+  padding: 0 16px 10px;
+  position: sticky;
+  top: 56px;
+  z-index: 4;
+}
+.hivemap-mode-btn {
+  flex: 1;
+  padding: 9px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  background: rgba(61,41,18,.12);
+  transition: background .15s, color .15s;
+}
+.hivemap-mode-btn.on {
+  background: var(--ink);
+  color: var(--cream);
+}
+
 .hivemap-scroll {
   flex: 1;
   overflow-y: auto;
   padding: 8px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 8px;
 }
 
-.world-section { display: flex; flex-direction: column; gap: 12px; }
-.world-title {
+/* Pack section */
+.pack-section { display: flex; flex-direction: column; gap: 10px; }
+
+/* Pack banner */
+.pack-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  background: var(--ink);
+  border-radius: var(--radius-pill);
+  margin-bottom: 4px;
+}
+.pack-banner.complete {
+  background: linear-gradient(90deg, var(--deep) 0%, var(--amber) 100%);
+}
+.pack-banner-name {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--cream);
   letter-spacing: .08em;
   text-transform: uppercase;
-  color: var(--ink-mid);
-  padding: 0 4px;
+}
+.pack-banner-progress {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,253,226,.6);
 }
 
-.hex-grid {
+/* Block of 10 levels */
+.hex-block {
   display: flex;
   flex-direction: column;
   gap: 2px;
   align-items: flex-start;
+  margin-bottom: 6px;
 }
+
 .hex-row {
   display: flex;
   gap: 6px;
 }
 .hex-row.offset { margin-left: calc(32px + 3px); }
 
-/* Hex level cell — flat-top */
+/* Queen Cell row — centred */
+.queen-row {
+  align-self: center;
+  margin-left: 0 !important;
+  margin-top: 2px;
+}
+
+/* Hex level cell — flat-top, correct aspect ratio (width : height = 2 : √3) */
 .hex-cell {
   width: 64px;
   height: 55px;
@@ -979,18 +1032,43 @@ button:focus-visible { outline: 3px solid rgba(255,201,60,.6); outline-offset: 3
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
   transition: transform .12s ease;
+  gap: 1px;
 }
 .hex-cell:active { transform: scale(.94); }
-.hex-cell.done    { background: var(--ink);     color: var(--cream); }
-.hex-cell.current { background: var(--honey);   color: var(--ink); }
-.hex-cell.locked  { background: var(--cream);   color: var(--ink-mid); opacity: .7; cursor: default; }
-.hex-cell-emoji   { font-size: 16px; line-height: 1; }
-.hex-cell-num     { font-size: 13px; font-weight: 700; line-height: 1; }
+
+/* Cell states */
+.hex-cell.done    { background: var(--ink);   color: var(--cream); }
+.hex-cell.perfect { background: var(--deep);  color: var(--cream); }
+.hex-cell.current { background: var(--honey); color: var(--ink); animation: hex-pulse 2s ease-in-out infinite; }
+.hex-cell.locked  { background: var(--cream); color: var(--ink-mid); opacity: .65; cursor: default; }
+@keyframes hex-pulse {
+  0%,100% { filter: brightness(1); }
+  50%     { filter: brightness(1.08); }
+}
+
+/* Queen Cell — 1.25× size */
+.hex-cell.queen {
+  width: 80px;
+  height: 69px;
+}
+/* Gold rim: wrap the queen cell in a slightly larger hex shape */
+.queen-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 86px;
+  height: 75px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background: var(--honey);
+}
+.queen-wrap.locked { background: rgba(61,41,18,.3); }
+.queen-wrap.perfect { background: var(--amber); }
+
+.hex-cell-num { font-size: 12px; font-weight: 700; line-height: 1; }
 
 .hivemap-sticky {
   position: fixed;

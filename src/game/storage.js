@@ -10,7 +10,8 @@ const empty = () => ({
   vibrate: true,
   solved: [], // grid words solved on the current level
   bonus: [], // every bonus word ever found, across all levels and modes
-  bonusLevel: [] // the ones first found on this level
+  bonusLevel: [], // the ones first found on this level
+  crowns: { easy: {}, normal: {}, hard: {} }, // per-level: 1 = done, 2 = perfect (no hints)
 });
 
 export function loadProgress() {
@@ -23,6 +24,7 @@ export function loadProgress() {
     // Saves from before difficulty modes kept a single `level`.
     if (!parsed.levels && Number(parsed.level)) levels.normal = Number(parsed.level);
 
+    const parsedCrowns = parsed.crowns && typeof parsed.crowns === 'object' ? parsed.crowns : {};
     return {
       mode: ['easy', 'normal', 'hard'].includes(parsed.mode) ? parsed.mode : 'normal',
       board: ['crossword', 'rows'].includes(parsed.board) ? parsed.board : 'crossword',
@@ -33,7 +35,12 @@ export function loadProgress() {
       vibrate: parsed.vibrate !== false,
       solved: Array.isArray(parsed.solved) ? parsed.solved : [],
       bonus: Array.isArray(parsed.bonus) ? parsed.bonus : [],
-      bonusLevel: Array.isArray(parsed.bonusLevel) ? parsed.bonusLevel : []
+      bonusLevel: Array.isArray(parsed.bonusLevel) ? parsed.bonusLevel : [],
+      crowns: {
+        easy:   parsedCrowns.easy   && typeof parsedCrowns.easy   === 'object' ? parsedCrowns.easy   : {},
+        normal: parsedCrowns.normal && typeof parsedCrowns.normal === 'object' ? parsedCrowns.normal : {},
+        hard:   parsedCrowns.hard   && typeof parsedCrowns.hard   === 'object' ? parsedCrowns.hard   : {},
+      },
     };
   } catch {
     return empty();

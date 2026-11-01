@@ -159,6 +159,7 @@ export function useGameLogic({ dict, level, progress, setProgress }) {
     flash, justSolved, justHinted, revealed,
     complete, showWin,
     submit, takeHint, resetLevel, onLetterSelect,
-    BONUS_REWARD
+    BONUS_REWARD,
+    hintsUsed: revealed.length > 0,
   };
 }

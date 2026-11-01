@@ -28,7 +28,7 @@ export default function App() {
   const [screen, setScreen]       = useState('home');
   const toastTimer                = useRef(null);
 
-  const { progress, setProgress, switchMode, nextLevel, setBoard, startOver } = useProgress();
+  const { progress, setProgress, switchMode, nextLevel, setBoard, markCrown, startOver } = useProgress();
 
   const currentLevel = progress.levels[progress.mode];
 
@@ -41,7 +41,7 @@ export default function App() {
     flash, justSolved, justHinted, revealed,
     complete, showWin,
     submit, takeHint, resetLevel, onLetterSelect,
-    BONUS_REWARD,
+    BONUS_REWARD, hintsUsed,
   } = useGameLogic({ dict, level, progress, setProgress });
 
   const { coinClaim, flyingCoins, claimBtnRef, coinHudRef, claimCoins } = useCoinClaim({ progress, setProgress });
@@ -65,6 +65,7 @@ export default function App() {
   }, [level, rotation]);
 
   const handleNextLevel = () => {
+    markCrown(currentLevel, progress.mode, !hintsUsed);
     nextLevel();
     resetLevel();
     setSelection([]);
@@ -147,6 +148,7 @@ export default function App() {
           progress={progress}
           onBack={() => setScreen('home')}
           onPlay={() => setScreen('play')}
+          onSwitchMode={handleSwitchMode}
         />
         {showSettings && (
           <SettingsSheet
